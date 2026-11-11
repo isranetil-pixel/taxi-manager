@@ -211,6 +211,7 @@ useEffect(() => {
 }, [])
 
   const [page, setPage] = useState('dashboard')
+  const [selectedContractId, setSelectedContractId] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [reportMonth, setReportMonth] = useState(() => {
   const now = new Date()
@@ -242,7 +243,31 @@ const expectedIncome = reportContracts.reduce(
 )
 
 const unpaidIncome = Math.max(0, expectedIncome - collectedIncome)
+const currentMonthCollected = contracts.reduce((sum, contract) => {
+  return sum + (contract.payments || [])
+    .filter(p => p.month === currentMonth())
+    .reduce((total, p) => total + Number(p.amount || 0), 0)
+}, 0)
+const currentMonthExpected = contracts
+  .filter(c => c.active !== false)
+  .reduce((sum, c) => sum + Number(c.monthly || 0), 0)
 
+const currentMonthUnpaid = Math.max(
+  0,
+  currentMonthExpected - currentMonthCollected
+)
+const currentMonthLateContracts = contracts.filter(contract => {
+  if (contract.active === false) return false
+
+  const paid = (contract.payments || [])
+    .filter(p => p.month === currentMonth())
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0)
+
+  const balance = Number(contract.monthly || 0) - paid
+
+  return balance > 0 &&
+    new Date().getDate() > Number(contract.dueDay)
+})
 const overdueContracts = reportContracts.filter(contract => {
   const wasPaid = (contract.payments || []).some(
     payment => payment.month === reportMonth
@@ -693,26 +718,27 @@ if (error) {
   setShowForm(false)
 }
 
-async function markPaid(id) {
-  const contract = contracts.find(c => c.id === id)
+async function addPayment(id, amount) {
+  const contract = contracts.find(c => String(c.id) === String(id))
   if (!contract) return
+
+  const paymentAmount = Number(amount)
+
+  if (!Number.isFinite(paymentAmount) || paymentAmount === 0) {
+  alert('יש להזין סכום שאינו אפס')
+  return
+}
 
   const month = currentMonth()
   const payments = contract.payments || []
 
-  if (payments.some(p => p.month === month)) {
-    alert('התשלום עבור החודש הזה כבר סומן כשולם')
-    return
-  }
-
   const updatedContract = {
     ...contract,
-    paidMonth: month,
     payments: [
       ...payments,
       {
         month,
-        amount: Number(contract.monthly),
+        amount: paymentAmount,
         paidAt: new Date().toISOString()
       }
     ]
@@ -731,7 +757,7 @@ async function markPaid(id) {
   }
 
   setContracts(prev => prev.map(c =>
-    c.id === id ? updatedContract : c
+    String(c.id) === String(id) ? updatedContract : c
   ))
 
   alert('התשלום נשמר בהצלחה!')
@@ -740,19 +766,28 @@ async function markPaid(id) {
 function contractStatus(contract) {
   if (contract.active === false) return 'הסתיים'
 
-  if (contract.paidMonth === currentMonth()) {
-    return 'שולם'
-  }
+  const month = currentMonth()
+  const payments = (contract.payments || [])
+    .filter(p => p.month === month)
+
+  const paidAmount = payments.reduce(
+    (sum, p) => sum + Number(p.amount || 0),
+    0
+  )
+
+  const monthlyAmount = Number(contract.monthly || 0)
+
+  if (paidAmount >= monthlyAmount) return 'שולם'
+  if (paidAmount > 0) return 'שולם חלקית'
 
   const today = new Date()
 
-  if (today.getDate() > contract.dueDay) {
+  if (today.getDate() > Number(contract.dueDay)) {
     return 'באיחור'
   }
 
   return 'ממתין לתשלום'
 }
-
 async function endContract(id) {
   const contract = contracts.find(c => c.id === id)
   if (!contract) return
@@ -1029,7 +1064,52 @@ if (!user) return <Login onLogin={setUser} />
                 + הוספת רכב חדש
               </button>
             </section>
+{currentMonthLateContracts.length > 0 && (
+  <section className="table-card">
+    <div className="table-heading">
+      <div>
+        <h2>⚠️ תשלומים באיחור</h2>
+        <p>נהגים שטרם השלימו את תשלום השכירות החודשית</p>
+      </div>
+      <span className="count">
+        {currentMonthLateContracts.length} חוזים באיחור
+      </span>
+    </div>
 
+    {currentMonthLateContracts.map(contract => {
+      const paid = (contract.payments || [])
+        .filter(p => p.month === currentMonth())
+        .reduce((sum, p) => sum + Number(p.amount || 0), 0)
+
+      const balance = Number(contract.monthly || 0) - paid
+
+      return (
+        <div key={contract.id} style={{ padding: '12px 0', borderBottom: '1px solid #eee' }}>
+          <button
+  type="button"
+  onClick={() => {
+  setSelectedContractId(contract.id)
+  setPage('contracts')
+}}
+  style={{
+    border: 'none',
+    background: 'none',
+    color: '#f58220',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    textDecoration: 'underline'
+  }}
+>
+  {contract.driverName}
+</button>
+          <span style={{ float: 'left', color: '#dc2626', fontWeight: 'bold' }}>
+            יתרה: ₪{balance.toLocaleString('he-IL')}
+          </span>
+        </div>
+      )
+    })}
+  </section>
+)}
             <section className="stats">
               <div className="stat-card">
                 <div className="stat-icon orange">🚕</div>
@@ -1058,6 +1138,18 @@ if (!user) return <Login onLogin={setUser} />
                 <h2>₪{income.toLocaleString('he-IL')}</h2>
                 <small>לפי הרכבים המושכרים</small>
               </div>
+              <div className="stat-card">
+  <div className="stat-icon green">💰</div>
+  <p>התקבל בפועל החודש</p>
+  <h2>₪{currentMonthCollected.toLocaleString('he-IL')}</h2>
+  <small>סך התשלומים שהתקבלו</small>
+</div>
+<div className="stat-card">
+  <div className="stat-icon orange">₪</div>
+  <p>יתרה לגבייה החודש</p>
+  <h2>₪{currentMonthUnpaid.toLocaleString('he-IL')}</h2>
+  <small>סכום שטרם התקבל</small>
+</div>
             </section>
 
             <section className="table-card">
@@ -1076,6 +1168,7 @@ if (!user) return <Login onLogin={setUser} />
     <th>נהג</th>
     <th>רכב</th>
     <th>שכירות חודשית</th>
+    <th>יתרה לתשלום</th>
     <th>פיקדון</th>
     <th>יום תשלום</th>
     <th>סטטוס</th>
@@ -1102,14 +1195,19 @@ if (!user) return <Login onLogin={setUser} />
       <td>{contractStatus(contract)}</td>
       <td>
         <div className="contract-actions">
-          {contractStatus(contract) !== 'שולם' && (
-            <button
-              className="contract-btn paid"
-              onClick={() => markPaid(contract.id)}
-            >
-              ✓ סמן כשולם
-            </button>
-          )}
+          {contract.active !== false && (
+  <button
+    className="contract-btn paid"
+    onClick={() => {
+      const amount = window.prompt('לתשלום רגיל הזן סכום חיובי. לתיקון טעות הזן סכום שלילי:')
+      if (amount !== null && amount.trim() !== '') {
+        addPayment(contract.id, amount)
+      }
+    }}
+  >
+    + הוסף תשלום
+  </button>
+)}
 
           {contract.active !== false && (
             <button
@@ -1357,7 +1455,7 @@ if (!user) return <Login onLogin={setUser} />
                       <th>תעודת זהות</th>
                       <th>רכב משויך</th>
                       <th>שכירות חודשית</th>
-                      <th>סטטוס</th>
+                      <th>יתרה לתשלום</th>
                       <th>פעולות</th>
                     </tr>
                   </thead>
@@ -1371,6 +1469,25 @@ if (!user) return <Login onLogin={setUser} />
                           {vehicles.find(v => v.id === d.vehicleId)?.name || 'ללא רכב'}
                         </td>
                         <td>₪{d.price.toLocaleString('he-IL')}</td>
+                        <td>
+  {(() => {
+    const driverContracts = contracts.filter(
+      c => String(c.driverId) === String(d.id) && c.active !== false
+    )
+
+    const monthlyCharge = driverContracts.reduce(
+      (sum, c) => sum + Number(c.monthly || 0), 0
+    )
+
+    const totalPaid = driverContracts.reduce((sum, c) => {
+      return sum + (c.payments || [])
+        .filter(p => p.month === currentMonth())
+        .reduce((total, p) => total + Number(p.amount || 0), 0)
+    }, 0)
+
+    return `₪${Math.max(0, monthlyCharge - totalPaid).toLocaleString('he-IL')}`
+  })()}
+</td>
                         <td>{d.active ? 'פעיל' : 'לא פעיל'}</td>
                         <td>
                           <button className="status-button"
@@ -1523,11 +1640,13 @@ if (!user) return <Login onLogin={setUser} />
     <section className="table-card">
       <h2>חוזים שטרם שולמו</h2>
 
-      {reportContracts.filter(contract =>
-        !(contract.payments || []).some(
-          payment => payment.month === reportMonth
-        )
-      ).length === 0 ? (
+            {reportContracts.filter(contract => {
+        const paid = (contract.payments || [])
+          .filter(payment => payment.month === reportMonth)
+          .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+
+        return paid < Number(contract.monthly || 0)
+      }).length === 0 ? (
         <p className="empty-message">
           כל התשלומים לחודש זה התקבלו.
         </p>
@@ -1537,31 +1656,56 @@ if (!user) return <Login onLogin={setUser} />
             <thead>
               <tr>
                 <th>שם הנהג</th>
-                <th>סכום לתשלום</th>
-                <th>יום תשלום</th>
-                <th>סטטוס</th>
+<th>חיוב חודשי</th>
+<th>שולם</th>
+<th>יתרה לתשלום</th>
+<th>יום תשלום</th>
+<th>סטטוס</th>
               </tr>
             </thead>
             <tbody>
               {reportContracts
-                .filter(contract =>
-                  !(contract.payments || []).some(
-                    payment => payment.month === reportMonth
-                  )
-                )
+                .filter(contract => {
+  const paid = (contract.payments || [])
+    .filter(payment => payment.month === reportMonth)
+    .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+
+  return paid < Number(contract.monthly || 0)
+})
                 .map(contract => (
                   <tr key={contract.id}>
-                    <td>{contract.driverName}</td>
-                    <td>
-                      ₪{Number(contract.monthly).toLocaleString('he-IL')}
-                    </td>
-                    <td>{contract.dueDay}</td>
-                    <td>
-                      {overdueContracts.some(c => c.id === contract.id)
-                        ? 'באיחור'
-                        : 'ממתין לתשלום'}
-                    </td>
-                  </tr>
+  <td>{contract.driverName}</td>
+
+  <td>
+    ₪{Number(contract.monthly).toLocaleString('he-IL')}
+  </td>
+
+  <td>
+    ₪{(contract.payments || [])
+      .filter(payment => payment.month === reportMonth)
+      .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+      .toLocaleString('he-IL')}
+  </td>
+
+  <td>
+    ₪{Math.max(
+      0,
+      Number(contract.monthly || 0) -
+      (contract.payments || [])
+        .filter(payment => payment.month === reportMonth)
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+    ).toLocaleString('he-IL')}
+  </td>
+
+  <td>{contract.dueDay}</td>
+
+  <td>
+    {overdueContracts.some(c => c.id === contract.id)
+      ? 'באיחור'
+      : 'ממתין לתשלום'}
+  </td>
+</tr>
+                  
                 ))}
             </tbody>
           </table>
@@ -1695,12 +1839,24 @@ if (!user) return <Login onLogin={setUser} />
 
 
 <h3>רשימת חוזי שכירות</h3>
-
+{selectedContractId !== null && (
+  <button
+    type="button"
+    onClick={() => setSelectedContractId(null)}
+  >
+    הצג את כל החוזים
+  </button>
+)}
 {contracts.length === 0 ? (
   <p className="empty-message">עדיין לא נוצרו חוזים.</p>
 ) : (
   <div className="contracts-list">
-    {contracts.map(contract => {
+    {contracts
+  .filter(contract =>
+    selectedContractId === null ||
+    String(contract.id) === String(selectedContractId)
+  )
+  .map(contract => {
       const vehicle = vehicles.find(
         v => Number(v.id) === Number(contract.vehicleId)
       )
@@ -1769,15 +1925,19 @@ if (!user) return <Login onLogin={setUser} />
 >
   ✏️ עריכת חוזה
 </button>
-            {contractStatus(contract) !== 'שולם' &&
-             contract.active !== false && (
-              <button
-                className="contract-btn paid"
-                onClick={() => markPaid(contract.id)}
-              >
-                ✓ סמן כשולם
-              </button>
-            )}
+            {contract.active !== false && (
+  <button
+    className="contract-btn paid"
+    onClick={() => {
+      const amount = window.prompt('הזן את סכום התשלום שהתקבל:')
+      if (amount !== null && amount.trim() !== '') {
+        addPayment(contract.id, amount)
+      }
+    }}
+  >
+    + הוסף תשלום
+  </button>
+)}
 
             {contract.active !== false && (
               <button
