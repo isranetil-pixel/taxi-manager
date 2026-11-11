@@ -454,23 +454,35 @@ function contractStatus(contract) {
   return 'ממתין לתשלום'
 }
 
-function endContract(id) {
+
+async function deleteContract(id) {
+  if (!window.confirm('האם למחוק את חוזה השכירות לצמיתות?')) return
+
   const contract = contracts.find(c => c.id === id)
 
-  if (!contract) return
+  const { error } = await supabase
+    .from('contracts')
+    .delete()
+    .eq('id', String(id))
 
-  setContracts(contracts.map(c =>
-    c.id === id
-      ? { ...c, active: false, endedAt: new Date().toISOString() }
-      : c
-  ))
+  if (error) {
+    alert('שגיאה במחיקת החוזה: ' + error.message)
+    return
+  }
 
-  setVehicles(vehicles.map(v =>
-    Number(v.id) === Number(contract.vehicleId)
-      ? { ...v, status: 'פנוי' }
-      : v
-  ))
+  setContracts(prev => prev.filter(c => c.id !== id))
+
+  if (contract?.active !== false && contract?.vehicleId) {
+    setVehicles(prev => prev.map(v =>
+      Number(v.id) === Number(contract.vehicleId)
+        ? { ...v, status: 'פנוי' }
+        : v
+    ))
+  }
+
+  alert('החוזה נמחק בהצלחה')
 }
+
 
 
   const menu = [
@@ -1049,6 +1061,12 @@ if (!user) return <Login onLogin={setUser} />
     סיום חוזה
   </button>
 )}
+<button
+  className="cancel-button"
+  onClick={() => deleteContract(contract.id)}
+>
+  מחיקת חוזה
+</button>
             </td>
           </tr>
         ))}
