@@ -882,7 +882,7 @@ if (!user) return <Login onLogin={setUser} />
 {contracts.length === 0 ? (
   <p className="empty-message">עדיין לא נוצרו חוזים.</p>
 ) : (
-  <div className="table-wrapper">
+  <div className="table-wrap contracts-table-wrap">
     <table>
       <thead>
         <tr>
