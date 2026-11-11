@@ -20,6 +20,19 @@ function loadData(key, fallback) {
 
 function App() {const [user, setUser] = useState(null)
 const [checkingLogin, setCheckingLogin] = useState(true)
+const [installPrompt, setInstallPrompt] = useState(null)
+useEffect(() => {
+  const handleInstallPrompt = (event) => {
+    event.preventDefault()
+    setInstallPrompt(event)
+  }
+
+  window.addEventListener('beforeinstallprompt', handleInstallPrompt)
+
+  return () => {
+    window.removeEventListener('beforeinstallprompt', handleInstallPrompt)
+  }
+}, [])
 async function handleLogout() {
   const { error } = await supabase.auth.signOut()
   if (error) {
@@ -32,6 +45,7 @@ useEffect(() => {
     setCheckingLogin(false)
   })
 
+
   const { data: listener } = supabase.auth.onAuthStateChange(
     (_event, session) => {
       setUser(session?.user ?? null)
@@ -41,7 +55,16 @@ useEffect(() => {
   return () => listener.subscription.unsubscribe()
 }, [])
 
+async function installApp() {
+  if (!installPrompt) {
+    alert('פתח את תפריט Chrome ובחר התקנת האפליקציה או הוספה למסך הבית')
+    return
+  }
 
+  installPrompt.prompt()
+  await installPrompt.userChoice
+  setInstallPrompt(null)
+}
 
 
   const [vehicles, setVehicles] = useState([])
@@ -478,6 +501,15 @@ if (!user) return <Login onLogin={setUser} />
 >
   🚪 התנתקות
 </button>
+{!window.matchMedia('(display-mode: standalone)').matches && (
+  <button
+    className="menu-item"
+    onClick={installApp}
+    style={{ marginTop: '10px', color: '#f58220' }}
+  >
+    📲 התקנת האפליקציה
+  </button>
+)}
       </aside>
 
       <main className="main">
