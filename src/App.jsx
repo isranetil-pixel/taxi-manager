@@ -1757,7 +1757,7 @@ if (!user) return <Login onLogin={setUser} />
 </div>
             <div>
               <span>סטטוס</span>
-              <strong>{contractStatus(contract)}</strong>
+              <strong>{contract.active === false ? 'לא פעיל' : 'פעיל'}</strong>
             </div>
           </div>
 
