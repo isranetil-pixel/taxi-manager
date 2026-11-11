@@ -210,6 +210,7 @@ useEffect(() => {
 }, [])
 
   const [page, setPage] = useState('dashboard')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [reportMonth, setReportMonth] = useState(() => {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -739,7 +740,14 @@ if (!user) return <Login onLogin={setUser} />
   return (
     <div className="app" dir="rtl">
 
-<aside className="sidebar">
+<aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+  <button
+  className="mobile-menu-toggle"
+  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+  aria-label={mobileMenuOpen ? 'סגירת תפריט' : 'פתיחת תפריט'}
+>
+  {mobileMenuOpen ? '✕' : '☰'}
+</button>
   <div className="brand">
 
     <div
@@ -778,9 +786,10 @@ if (!user) return <Login onLogin={setUser} />
             key={item.id}
             className={`menu-item ${page === item.id ? 'active' : ''}`}
             onClick={() => {
-              setPage(item.id)
-              setShowForm(false)
-            }}
+  setPage(item.id)
+  setShowForm(false)
+  setMobileMenuOpen(false)
+}}
           >
             {item.icon} &nbsp; {item.label}
           </button>
