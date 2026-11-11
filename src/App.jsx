@@ -243,10 +243,24 @@ useEffect(() => {
         : v
     ))
   }
-
+const [editingVehicleId, setEditingVehicleId] = useState(null)
   function addVehicle(e) {
-    e.preventDefault()
+  e.preventDefault()
 
+  if (editingVehicleId !== null) {
+    setVehicles(vehicles.map(v =>
+      v.id === editingVehicleId
+        ? {
+            ...v,
+            ...newVehicle,
+            price: Number(newVehicle.price),
+            year: Number(newVehicle.year)
+          }
+        : v
+    ))
+
+    setEditingVehicleId(null)
+  } else {
     setVehicles([...vehicles, {
       ...newVehicle,
       id: Date.now(),
@@ -255,12 +269,14 @@ useEffect(() => {
       driver: newVehicle.driver || 'לא משויך',
       status: 'פנוי'
     }])
-
-    setNewVehicle({
-      name: '', plate: '', year: '2026', driver: '', price: ''
-    })
-    setShowForm(false)
   }
+
+  setNewVehicle({
+    name: '', plate: '', year: '2026', driver: '', price: ''
+  })
+
+  setShowForm(false)
+}
 
   async function addDriver(e) {
     e.preventDefault()
@@ -568,14 +584,20 @@ if (!user) return <Login onLogin={setUser} />
                 <p>הוספה ומעקב אחר הרכבים בעסק.</p>
               </div>
               <button className="add-button"
-                onClick={() => setShowForm(!showForm)}>
-                + הוספת רכב
-              </button>
+  onClick={() => {
+    setEditingVehicleId(null)
+    setNewVehicle({
+      name: '', plate: '', year: '2026', driver: '', price: ''
+    })
+    setShowForm(!showForm)
+  }}>
+  + הוספת רכב
+</button>
             </section>
 
             {showForm && (
               <section className="form-card">
-                <h2>רכב חדש</h2>
+                <h2>{editingVehicleId !== null ? 'עריכת פרטי רכב' : 'רכב חדש'}</h2>
                 <form onSubmit={addVehicle}>
                   <input placeholder="דגם הרכב" required
                     value={newVehicle.name}
@@ -592,7 +614,9 @@ if (!user) return <Login onLogin={setUser} />
                   <input placeholder="שכירות חודשית" type="number" required
                     value={newVehicle.price}
                     onChange={e => setNewVehicle({...newVehicle, price:e.target.value})}/>
-                  <button className="add-button">שמירת רכב</button>
+                  <button className="add-button" type="submit">
+  {editingVehicleId !== null ? 'שמירת שינויים' : 'שמירת רכב'}
+</button>
                 </form>
               </section>
             )}
@@ -616,11 +640,30 @@ if (!user) return <Login onLogin={setUser} />
                         <td>₪{v.price.toLocaleString('he-IL')}</td>
                         <td>{v.status}</td>
                         <td>
-                          <button className="status-button"
-                            onClick={() => toggleStatus(v.id)}>
-                            {v.status === 'מושכר' ? 'שחרור רכב' : 'השכרת רכב'}
-                          </button>
-                        </td>
+  <button
+    className="status-button"
+    onClick={() => toggleStatus(v.id)}
+  >
+    {v.status === 'מושכר' ? 'שחרור רכב' : 'השכרת רכב'}
+  </button>
+
+  <button
+    className="status-button"
+    onClick={() => {
+  setEditingVehicleId(v.id)
+  setNewVehicle({
+    name: v.name,
+    plate: v.plate,
+    year: String(v.year),
+    driver: v.driver,
+    price: String(v.price)
+  })
+  setShowForm(true)
+}}
+  >
+    ✏️ עריכה
+  </button>
+</td>
                       </tr>
                     ))}
                   </tbody>
