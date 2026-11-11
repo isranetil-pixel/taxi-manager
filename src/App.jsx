@@ -71,6 +71,15 @@ async function installApp() {
 const [loadingVehicles, setLoadingVehicles] = useState(true)
 
 useEffect(() => {
+
+  if (!user) {
+    setVehicles([])
+    setLoadingVehicles(false)
+    return
+  }
+
+  setLoadingVehicles(true)
+
   async function loadVehicles() {
     const { data, error } = await supabase
       .from('vehicles')
@@ -107,8 +116,8 @@ const savedVehicles = savedVehiclesFromStorage.length > 0 ? savedVehiclesFromSto
     setLoadingVehicles(false)
   }
 
-  loadVehicles()
-}, [])
+loadVehicles()
+}, [user])
 
  
 
@@ -466,15 +475,38 @@ if (!user) return <Login onLogin={setUser} />
   return (
     <div className="app" dir="rtl">
 
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-icon">🚕</div>
-          <div>
-            <h2>Taxi Manager</h2>
-            <span>מערכת ניהול צי מוניות</span>
-          </div>
-        </div>
+<aside className="sidebar">
+  <div className="brand">
 
+    <div
+  className="brand-icon"
+  style={{
+    width: '55px',
+    height: '55px',
+    minWidth: '55px',
+    overflow: 'hidden',
+    borderRadius: '12px',
+    flexShrink: 0
+  }}
+>
+  <img
+    src="/brand-icon.png"
+    alt="Taxi Manager"
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      display: 'block'
+    }}
+  />
+</div>
+
+    <div>
+      <h2>Taxi Manager</h2>
+      <span>מערכת ניהול צי מוניות</span>
+    </div>
+
+  </div>
         <div className="menu-title">תפריט ראשי</div>
 
         {menu.map(item => (
@@ -510,6 +542,7 @@ if (!user) return <Login onLogin={setUser} />
     📲 התקנת האפליקציה
   </button>
 )}
+      
       </aside>
 
       <main className="main">
