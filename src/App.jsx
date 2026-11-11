@@ -301,6 +301,8 @@ const maxAnnualIncome = Math.max(
     price: '',
   })
 
+  const [editingDriverId, setEditingDriverId] = useState(null)
+
   const [newContract, setNewContract] = useState({
   driverId: '',
   monthly: '',
@@ -425,46 +427,128 @@ async function deleteVehicle(id) {
 
   alert('הרכב נמחק בהצלחה')
 }
-  async function addDriver(e) {
-    e.preventDefault()
+  async function saveDriver(e) {
+  e.preventDefault()
 
-    const driver = {
-      ...newDriver,
-      id: Date.now(),
-      vehicleId: newDriver.vehicleId ? Number(newDriver.vehicleId) : null,
-      price: Number(newDriver.price),
-      active: true
+  const oldDriver = drivers.find(d => d.id === editingDriverId)
+
+  const driver = {
+    ...newDriver,
+    id: editingDriverId ?? Date.now(),
+    vehicleId: newDriver.vehicleId ? Number(newDriver.vehicleId) : null,
+    price: Number(newDriver.price),
+    active: oldDriver ? oldDriver.active : true
+  }
+
+  const conflict = drivers.find(d =>
+    d.id !== driver.id &&
+    d.active &&
+    driver.vehicleId &&
+    Number(d.vehicleId) === Number(driver.vehicleId)
+  )
+
+  if (conflict) {
+    alert('הרכב כבר משויך לנהג פעיל אחר')
+    return
+  }
+
+  const { error } = await supabase
+    .from('drivers')
+    .upsert({
+      id: String(driver.id),
+      data: driver
+    })
+
+  if (error) {
+    alert('שגיאה בשמירת נהג: ' + error.message)
+    return
+  }
+
+  const activeContract = contracts.find(c =>
+    Number(c.driverId) === Number(driver.id) &&
+    c.active !== false
+  )
+
+  if (activeContract && Number(oldDriver?.vehicleId) !== Number(driver.vehicleId)) {
+    const updatedContract = {
+      ...activeContract,
+      vehicleId: driver.vehicleId,
+      driverName: driver.name
     }
-const { error } = await supabase
-  .from('drivers')
-  .upsert({
-    id: String(driver.id),
-    data: driver
+
+    const { error: contractError } = await supabase
+      .from('contracts')
+      .upsert({
+        id: String(updatedContract.id),
+        data: updatedContract
+      })
+
+    if (contractError) {
+      alert('הנהג נשמר, אך עדכון החוזה נכשל: ' + contractError.message)
+      return
+    }
+
+    setContracts(prev => prev.map(c =>
+      c.id === updatedContract.id ? updatedContract : c
+    ))
+  }
+
+  if (oldDriver) {
+    setDrivers(prev => prev.map(d =>
+      d.id === driver.id ? driver : d
+    ))
+  } else {
+    setDrivers(prev => [...prev, driver])
+  }
+
+  setVehicles(prev => prev.map(v => {
+    if (driver.vehicleId && Number(v.id) === Number(driver.vehicleId)) {
+      return {
+        ...v,
+        driver: driver.name,
+        status: 'מושכר',
+        price: driver.price
+      }
+    }
+
+    if (
+      oldDriver?.vehicleId &&
+      Number(v.id) === Number(oldDriver.vehicleId) &&
+      Number(oldDriver.vehicleId) !== Number(driver.vehicleId)
+    ) {
+      return { ...v, driver: '', status: 'פנוי' }
+    }
+
+    return v
+  }))
+
+  setNewDriver({
+    name: '', phone: '', idNumber: '', vehicleId: '', price: ''
   })
 
-if (error) {
-  alert('שגיאה בשמירת נהג: ' + error.message)
-  return
+  setEditingDriverId(null)
+  setShowForm(false)
 }
-    setDrivers([...drivers, driver])
-
-    setVehicles(vehicles.map(v =>
-      v.id === driver.vehicleId
-        ? { ...v, driver: driver.name, status: 'מושכר', price: driver.price }
-        : v
-    ))
-
-    setNewDriver({
-      name: '', phone: '', idNumber: '', vehicleId: '', price: ''
-    })
-    setShowForm(false)
-  }
 
   function toggleDriver(id) {
     setDrivers(drivers.map(d =>
       d.id === id ? { ...d, active: !d.active } : d
     ))
   }
+
+  function editDriver(driver) {
+  setEditingDriverId(driver.id)
+
+  setNewDriver({
+    name: driver.name || '',
+    phone: driver.phone || '',
+    idNumber: driver.idNumber || '',
+    vehicleId: driver.vehicleId ? String(driver.vehicleId) : '',
+    price: driver.price ? String(driver.price) : '',
+  })
+
+  setShowForm(true)
+}
 
 
 async function deleteDriver(id) {
@@ -998,6 +1082,21 @@ if (!user) return <Login onLogin={setUser} />
                   <button className="add-button" type="submit">
   {editingVehicleId !== null ? 'שמירת שינויים' : 'שמירת רכב'}
 </button>
+{editingDriverId !== null && (
+  <button
+    type="button"
+    className="cancel-button"
+    onClick={() => {
+      setEditingDriverId(null)
+      setNewDriver({
+        name: '', phone: '', idNumber: '', vehicleId: '', price: ''
+      })
+      setShowForm(false)
+    }}
+  >
+    ביטול
+  </button>
+)}
                 </form>
               </section>
             )}
@@ -1093,8 +1192,8 @@ if (!user) return <Login onLogin={setUser} />
 
             {showForm && (
               <section className="form-card">
-                <h2>הוספת נהג חדש</h2>
-                <form onSubmit={addDriver}>
+                <h2>{editingDriverId !== null ? 'עריכת פרטי נהג' : 'הוספת נהג חדש'}</h2>
+                <form onSubmit={saveDriver}>
                   <input placeholder="שם מלא" required
                     value={newDriver.name}
                     onChange={e => setNewDriver({...newDriver, name:e.target.value})}/>
@@ -1124,8 +1223,8 @@ if (!user) return <Login onLogin={setUser} />
                     onChange={e => setNewDriver({...newDriver, price:e.target.value})}/>
 
                   <button className="add-button" type="submit">
-                    שמירת נהג
-                  </button>
+  {editingDriverId !== null ? 'שמירת שינויים' : 'שמירת נהג'}
+</button>
                 </form>
               </section>
             )}
@@ -1164,6 +1263,11 @@ if (!user) return <Login onLogin={setUser} />
                         <td>₪{d.price.toLocaleString('he-IL')}</td>
                         <td>{d.active ? 'פעיל' : 'לא פעיל'}</td>
                         <td>
+                          <button className="status-button"
+  onClick={() => editDriver(d)}>
+  עריכה
+</button>
+{' '}
                           <button className="status-button"
                             onClick={() => toggleDriver(d.id)}>
                             {d.active ? 'השבתה' : 'הפעלה'}
