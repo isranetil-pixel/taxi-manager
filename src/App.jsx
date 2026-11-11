@@ -242,7 +242,16 @@ const expectedIncome = reportContracts.reduce(
   0
 )
 
-const unpaidIncome = Math.max(0, expectedIncome - collectedIncome)
+const unpaidIncome = reportContracts.reduce((total, contract) => {
+  const paid = (contract.payments || [])
+    .filter(payment => payment.month === reportMonth)
+    .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+
+  const balance = Number(contract.monthly || 0) - paid
+
+  return total + Math.max(0, balance)
+}, 0)
+
 const currentMonthCollected = contracts.reduce((sum, contract) => {
   return sum + (contract.payments || [])
     .filter(p => p.month === currentMonth())
