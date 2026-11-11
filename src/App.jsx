@@ -454,7 +454,40 @@ function contractStatus(contract) {
   return 'ממתין לתשלום'
 }
 
+async function endContract(id) {
+  const contract = contracts.find(c => c.id === id)
+  if (!contract) return
 
+  const updatedContract = {
+    ...contract,
+    active: false,
+    endedAt: new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from('contracts')
+    .upsert({
+      id: String(id),
+      data: updatedContract
+    })
+
+  if (error) {
+    alert('שגיאה בעדכון החוזה: ' + error.message)
+    return
+  }
+
+  setContracts(prev => prev.map(c =>
+    c.id === id ? updatedContract : c
+  ))
+
+  setVehicles(prev => prev.map(v =>
+    Number(v.id) === Number(contract.vehicleId)
+      ? { ...v, status: 'פנוי' }
+      : v
+  ))
+
+  alert('החוזה הסתיים בהצלחה')
+}
 async function deleteContract(id) {
   if (!window.confirm('האם למחוק את חוזה השכירות לצמיתות?')) return
 
