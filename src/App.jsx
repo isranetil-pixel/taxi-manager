@@ -1880,15 +1880,21 @@ if (!user) return <Login onLogin={setUser} />
               <strong>{contract.driverName}</strong>
             </div>
 
-            <div>
-              <span>רכב</span>
-              <strong>
-                {vehicle
-                  ? `${vehicle.name} | ${vehicle.plate}`
-                  : 'לא משויך רכב'}
-              </strong>
-            </div>
-
+<div>
+  <span>רכב</span>
+  <strong className="vehicle-number" dir="rtl">
+    {vehicle
+      ? (
+        <>
+          {vehicle.name}
+          <span dir="ltr" style={{ whiteSpace: 'nowrap' }}>
+            {' | '}{vehicle.plate}
+          </span>
+        </>
+      )
+      : 'לא משויך רכב'}
+  </strong>
+</div>
             <div>
               <span>שכירות חודשית</span>
               <strong>
