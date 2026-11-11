@@ -1,7 +1,7 @@
 
 {
-  "name": "Taxi Manager",
-  "short_name": "Taxi Manager",
+  "name": "Taxi Manager - ניהול צי מוניות",
+"short_name": "Taxi Manager",
   "description": "מערכת לניהול צי מוניות, נהגים וחוזי שכירות",
   "start_url": "/",
   "scope": "/",

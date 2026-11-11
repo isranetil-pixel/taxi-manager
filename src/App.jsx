@@ -210,6 +210,86 @@ useEffect(() => {
 }, [])
 
   const [page, setPage] = useState('dashboard')
+  const [reportMonth, setReportMonth] = useState(() => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+})
+const [monthOpen, setMonthOpen] = useState(false)
+const [yearOpen, setYearOpen] = useState(false)
+const reportContracts = contracts.filter(contract => {
+  const startMonth = contract.startDate?.slice(0, 7) || ''
+  const endMonth = contract.endedAt?.slice(0, 7) || ''
+
+  if (startMonth && startMonth > reportMonth) return false
+  if (endMonth && endMonth < reportMonth) return false
+
+  return true
+})
+
+const collectedIncome = reportContracts.reduce((sum, contract) => {
+  const payments = contract.payments || []
+
+  return sum + payments
+    .filter(payment => payment.month === reportMonth)
+    .reduce((total, payment) => total + Number(payment.amount || 0), 0)
+}, 0)
+
+const expectedIncome = reportContracts.reduce(
+  (sum, contract) => sum + Number(contract.monthly || 0),
+  0
+)
+
+const unpaidIncome = Math.max(0, expectedIncome - collectedIncome)
+
+const overdueContracts = reportContracts.filter(contract => {
+  const wasPaid = (contract.payments || []).some(
+    payment => payment.month === reportMonth
+  )
+
+  if (wasPaid) return false
+
+  const today = new Date()
+  const thisMonth = currentMonth()
+
+  return reportMonth < thisMonth ||
+    (reportMonth === thisMonth && today.getDate() > Number(contract.dueDay))
+})
+
+const overdueIncome = overdueContracts.reduce(
+  (sum, contract) => sum + Number(contract.monthly || 0),
+  0
+)
+const reportYear = reportMonth.slice(0, 4)
+
+const monthNames = [
+  'ינו', 'פבר', 'מרץ', 'אפר',
+  'מאי', 'יוני', 'יולי', 'אוג',
+  'ספט', 'אוק', 'נוב', 'דצמ'
+]
+
+const annualIncome = monthNames.map((monthName, index) => {
+  const month = `${reportYear}-${String(index + 1).padStart(2, '0')}`
+
+  const total = contracts.reduce((sum, contract) => {
+    const payments = contract.payments || []
+
+    return sum + payments
+      .filter(payment => payment.month === month)
+      .reduce((paymentSum, payment) =>
+        paymentSum + Number(payment.amount || 0), 0)
+  }, 0)
+
+  return {
+    month: monthName,
+    total
+  }
+})
+
+const maxAnnualIncome = Math.max(
+  ...annualIncome.map(item => item.total),
+  1
+)
+
   const [showForm, setShowForm] = useState(false)
 
   const [newDriver, setNewDriver] = useState({
@@ -464,12 +544,48 @@ if (error) {
   setShowForm(false)
 }
 
-function markPaid(id) {
-  setContracts(contracts.map(c =>
-    c.id === id
-      ? { ...c, paidMonth: currentMonth() }
-      : c
+async function markPaid(id) {
+  const contract = contracts.find(c => c.id === id)
+  if (!contract) return
+
+  const month = currentMonth()
+  const payments = contract.payments || []
+
+  if (payments.some(p => p.month === month)) {
+    alert('התשלום עבור החודש הזה כבר סומן כשולם')
+    return
+  }
+
+  const updatedContract = {
+    ...contract,
+    paidMonth: month,
+    payments: [
+      ...payments,
+      {
+        month,
+        amount: Number(contract.monthly),
+        paidAt: new Date().toISOString()
+      }
+    ]
+  }
+
+  const { error } = await supabase
+    .from('contracts')
+    .upsert({
+      id: String(id),
+      data: updatedContract
+    })
+
+  if (error) {
+    alert('שגיאה בשמירת התשלום: ' + error.message)
+    return
+  }
+
+  setContracts(prev => prev.map(c =>
+    c.id === id ? updatedContract : c
   ))
+
+  alert('התשלום נשמר בהצלחה!')
 }
 
 function contractStatus(contract) {
@@ -522,6 +638,64 @@ async function endContract(id) {
 
   alert('החוזה הסתיים בהצלחה')
 }
+
+async function uploadContractFile(contractId, file) {
+  if (!file) return
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+const filePath = `${contractId}/${Date.now()}-${safeName}`
+
+  const { error } = await supabase.storage
+    .from('contract-files')
+    .upload(filePath, file)
+
+  if (error) {
+    alert('שגיאה בהעלאת הקובץ: ' + error.message)
+    return
+  }
+
+  const contract = contracts.find(c => c.id === contractId)
+
+  const updatedContract = {
+    ...contract,
+    files: [...(contract.files || []), {
+      name: file.name,
+      path: filePath
+    }]
+  }
+
+  const { error: saveError } = await supabase
+    .from('contracts')
+    .upsert({
+      id: String(contractId),
+      data: updatedContract
+    })
+
+  if (saveError) {
+    alert('הקובץ הועלה, אך פרטי המסמך לא נשמרו: ' + saveError.message)
+    return
+  }
+
+  setContracts(prev => prev.map(c =>
+    c.id === contractId ? updatedContract : c
+  ))
+
+  alert('הקובץ הועלה בהצלחה')
+}
+
+async function openContractFile(path) {
+  const { data, error } = await supabase.storage
+    .from('contract-files')
+    .createSignedUrl(path, 60)
+
+  if (error) {
+    alert('שגיאה בפתיחת המסמך: ' + error.message)
+    return
+  }
+
+  window.open(data.signedUrl, '_blank')
+}
+
 async function deleteContract(id) {
   if (!window.confirm('האם למחוק את חוזה השכירות לצמיתות?')) return
 
@@ -705,26 +879,69 @@ if (!user) return <Login onLogin={setUser} />
               <div className="table-wrap">
                 <table>
                   <thead>
-                    <tr>
-                      <th>דגם הרכב</th>
-                      <th>מספר רישוי</th>
-                      <th>נהג</th>
-                      <th>רכב ומספר רישוי</th>
-                      <th>שכירות חודשית</th>
-                      <th>סטטוס</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vehicles.map(v => (
-                      <tr key={v.id}>
-                        <td>{v.name}</td>
-                        <td>{v.plate}</td>
-                        <td>{v.driver}</td>
-                        <td>₪{v.price.toLocaleString('he-IL')}</td>
-                        <td>{v.status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
+  <tr>
+    <th>נהג</th>
+    <th>רכב</th>
+    <th>שכירות חודשית</th>
+    <th>פיקדון</th>
+    <th>יום תשלום</th>
+    <th>סטטוס</th>
+    <th>פעולות</th>
+  </tr>
+</thead>
+<tbody>
+  {contracts.map(contract => (
+    <tr key={contract.id}>
+      <td>{contract.driverName}</td>
+      <td>
+        {(() => {
+          const vehicle = vehicles.find(
+            v => Number(v.id) === Number(contract.vehicleId)
+          )
+          return vehicle
+            ? `${vehicle.name} | ${vehicle.plate}`
+            : 'לא משויך רכב'
+        })()}
+      </td>
+      <td>{contract.monthly.toLocaleString('he-IL')} ₪</td>
+      <td>{contract.deposit.toLocaleString('he-IL')} ₪</td>
+      <td>{contract.dueDay}</td>
+      <td>{contractStatus(contract)}</td>
+      <td>
+        <div className="contract-actions">
+          {contractStatus(contract) !== 'שולם' && (
+            <button
+              className="contract-btn paid"
+              onClick={() => markPaid(contract.id)}
+            >
+              ✓ סמן כשולם
+            </button>
+          )}
+
+          {contract.active !== false && (
+            <button
+              className="contract-btn end"
+              onClick={() => {
+                if (window.confirm('האם לסיים את חוזה השכירות?')) {
+                  endContract(contract.id)
+                }
+              }}
+            >
+              סיום חוזה
+            </button>
+          )}
+
+          <button
+            className="contract-btn delete"
+            onClick={() => deleteContract(contract.id)}
+          >
+            מחיקת חוזה
+          </button>
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
                 </table>
               </div>
             </section>
@@ -962,10 +1179,173 @@ if (!user) return <Login onLogin={setUser} />
         )}
 
  {page === 'finance' && (
-  <section className="table-card">
-    <h2>ניהול כספים</h2>
-    <p>המודול עדיין בפיתוח.</p>
-  </section>
+  <>
+    <section className="welcome">
+      <div>
+        <h2>דוחות והכנסות 💰</h2>
+        <p>מעקב אחר הכנסות, תשלומים וחובות לפי חודש.</p>
+      </div>
+
+      
+<div className="report-period-picker">
+
+  <div className="custom-period-select">
+    <button
+      type="button"
+      className="period-trigger"
+      onClick={() => {
+        setMonthOpen(!monthOpen)
+        setYearOpen(false)
+      }}
+    >
+      {[
+        'ינואר', 'פברואר', 'מרץ', 'אפריל',
+        'מאי', 'יוני', 'יולי', 'אוגוסט',
+        'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
+      ][Number(reportMonth.slice(5, 7)) - 1]}
+      <span>⌄</span>
+    </button>
+
+    {monthOpen && (
+      <div className="period-options">
+        {[
+          'ינואר', 'פברואר', 'מרץ', 'אפריל',
+          'מאי', 'יוני', 'יולי', 'אוגוסט',
+          'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
+        ].map((month, index) => {
+          const value = String(index + 1).padStart(2, '0')
+          return (
+            <button
+              type="button"
+              key={value}
+              className={reportMonth.slice(5, 7) === value ? 'selected' : ''}
+              onClick={() => {
+                setReportMonth(`${reportMonth.slice(0, 4)}-${value}`)
+                setMonthOpen(false)
+              }}
+            >
+              {month}
+            </button>
+          )
+        })}
+      </div>
+    )}
+  </div>
+
+  <div className="custom-period-select">
+    <button
+      type="button"
+      className="period-trigger"
+      onClick={() => {
+        setYearOpen(!yearOpen)
+        setMonthOpen(false)
+      }}
+    >
+      {reportMonth.slice(0, 4)}
+      <span>⌄</span>
+    </button>
+
+    {yearOpen && (
+      <div className="period-options">
+        {Array.from({ length: 7 }, (_, i) => 2024 + i).map(year => (
+          <button
+            type="button"
+            key={year}
+            className={reportMonth.slice(0, 4) === String(year) ? 'selected' : ''}
+            onClick={() => {
+              setReportMonth(`${year}-${reportMonth.slice(5, 7)}`)
+              setYearOpen(false)
+            }}
+          >
+            {year}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+
+    </div>
+    </section>
+
+    <section className="stats">
+      <div className="stat-card">
+        <div className="stat-icon green">₪</div>
+        <p>הכנסות שהתקבלו</p>
+        <h2>₪{collectedIncome.toLocaleString('he-IL')}</h2>
+        <small>תשלומים שנרשמו בחודש הנבחר</small>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon blue">📊</div>
+        <p>הכנסה צפויה</p>
+        <h2>₪{expectedIncome.toLocaleString('he-IL')}</h2>
+        <small>לפי החוזים בחודש הנבחר</small>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon orange">⏳</div>
+        <p>טרם התקבלו</p>
+        <h2>₪{unpaidIncome.toLocaleString('he-IL')}</h2>
+        <small>יתרה שעדיין לא שולמה</small>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon purple">⚠️</div>
+        <p>חובות באיחור</p>
+        <h2>₪{overdueIncome.toLocaleString('he-IL')}</h2>
+        <small>{overdueContracts.length} חוזים באיחור</small>
+      </div>
+    </section>
+
+    <section className="table-card">
+      <h2>חוזים שטרם שולמו</h2>
+
+      {reportContracts.filter(contract =>
+        !(contract.payments || []).some(
+          payment => payment.month === reportMonth
+        )
+      ).length === 0 ? (
+        <p className="empty-message">
+          כל התשלומים לחודש זה התקבלו.
+        </p>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>שם הנהג</th>
+                <th>סכום לתשלום</th>
+                <th>יום תשלום</th>
+                <th>סטטוס</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportContracts
+                .filter(contract =>
+                  !(contract.payments || []).some(
+                    payment => payment.month === reportMonth
+                  )
+                )
+                .map(contract => (
+                  <tr key={contract.id}>
+                    <td>{contract.driverName}</td>
+                    <td>
+                      ₪{Number(contract.monthly).toLocaleString('he-IL')}
+                    </td>
+                    <td>{contract.dueDay}</td>
+                    <td>
+                      {overdueContracts.some(c => c.id === contract.id)
+                        ? 'באיחור'
+                        : 'ממתין לתשלום'}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  </>
 )}
 
 {page === 'maintenance' && (
@@ -988,7 +1368,7 @@ if (!user) return <Login onLogin={setUser} />
     </button>
 
     {showForm && (
-      <form onSubmit={addContract} className="vehicle-form">
+      <form onSubmit={addContract} className="vehicle-form contract-form">
         <label>בחירת נהג</label>
         <div className="custom-select">
   <details>
@@ -1049,7 +1429,6 @@ if (!user) return <Login onLogin={setUser} />
         />
 
         <label>תאריך תחילת חוזה</label>
-        <label>תאריך תחילת חוזה</label>
 <input
   type="date"
   value={newContract.startDate}
@@ -1081,72 +1460,129 @@ if (!user) return <Login onLogin={setUser} />
       <p>אין נהגים במערכת. יש להוסיף נהג לפני יצירת חוזה.</p>
     )}
 
-    <h3>רשימת חוזי שכירות</h3>
+
+<h3>רשימת חוזי שכירות</h3>
 
 {contracts.length === 0 ? (
   <p className="empty-message">עדיין לא נוצרו חוזים.</p>
 ) : (
-  <div className="table-wrap contracts-table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>נהג</th>
-          <th>שכירות חודשית</th>
-          <th>פיקדון</th>
-          <th>יום תשלום</th>
-          <th>סטטוס</th>
-          <th>פעולה</th>
-        </tr>
-      </thead>
-      <tbody>
-        {contracts.map(contract => (
-          <tr key={contract.id}>
-            <td>{contract.driverName}</td>
-            <td>
-  {(() => {
-    const vehicle = vehicles.find(
-      v => Number(v.id) === Number(contract.vehicleId)
-    )
+  <div className="contracts-list">
+    {contracts.map(contract => {
+      const vehicle = vehicles.find(
+        v => Number(v.id) === Number(contract.vehicleId)
+      )
 
-    return vehicle
-      ? `${vehicle.name} | ${vehicle.plate}`
-      : 'לא משויך רכב'
-  })()}
-</td>
-            <td>{contract.monthly.toLocaleString('he-IL')} ₪</td>
-            <td>{contract.deposit.toLocaleString('he-IL')} ₪</td>
-            <td>{contract.dueDay}</td>
-            <td>{contractStatus(contract)}</td>
-            <td>
-              {contractStatus(contract) !== 'שולם' && (
-                <button onClick={() => markPaid(contract.id)}>
-                  סמן כשולם
-                </button>
-                )}
-{contract.active !== false && (
-  <button
-    onClick={() => {
-      if (window.confirm('האם לסיים את חוזה השכירות?')) {
-        endContract(contract.id)
-      }
-    }}
-  >
-    סיום חוזה
-  </button>
-)}
-<button
-  className="cancel-button"
-  onClick={() => deleteContract(contract.id)}
->
-  מחיקת חוזה
-</button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+      return (
+        <div className="contract-card" key={contract.id}>
+          <div className="contract-details">
+            <div>
+              <span>נהג</span>
+              <strong>{contract.driverName}</strong>
+            </div>
+
+            <div>
+              <span>רכב</span>
+              <strong>
+                {vehicle
+                  ? `${vehicle.name} | ${vehicle.plate}`
+                  : 'לא משויך רכב'}
+              </strong>
+            </div>
+
+            <div>
+              <span>שכירות חודשית</span>
+              <strong>
+                ₪{Number(contract.monthly || 0).toLocaleString('he-IL')}
+              </strong>
+            </div>
+
+            <div>
+              <span>פיקדון</span>
+              <strong>
+                ₪{Number(contract.deposit || 0).toLocaleString('he-IL')}
+              </strong>
+            </div>
+
+            <div>
+              <span>יום תשלום</span>
+              <strong>{contract.dueDay}</strong>
+            </div>
+
+            <div>
+              <span>סטטוס</span>
+              <strong>{contractStatus(contract)}</strong>
+            </div>
+          </div>
+
+          <div className="contract-action-bar">
+            {contractStatus(contract) !== 'שולם' &&
+             contract.active !== false && (
+              <button
+                className="contract-btn paid"
+                onClick={() => markPaid(contract.id)}
+              >
+                ✓ סמן כשולם
+              </button>
+            )}
+
+            {contract.active !== false && (
+              <button
+                className="contract-btn end"
+                onClick={() => {
+                  if (window.confirm('האם לסיים את חוזה השכירות?')) {
+                    endContract(contract.id)
+                  }
+                }}
+              >
+                סיום חוזה
+              </button>
+            )}
+
+            <label className="contract-btn upload">
+              📎 העלאת מסמך
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                hidden
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (file) uploadContractFile(contract.id, file)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+
+            <button
+              className="contract-btn delete"
+              onClick={() => deleteContract(contract.id)}
+            >
+              🗑 מחיקת חוזה
+            </button>
+          </div>
+
+          {(contract.files || []).length > 0 && (
+            <div className="contract-documents">
+              <strong>📁 מסמכי החוזה</strong>
+              <div className="contract-files-list">
+                {contract.files.map((file, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className="contract-file"
+                    onClick={() => openContractFile(file.path)}
+                  >
+                    📄 {file.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    })}
   </div>
 )}
+
   </section>
 )}
 
