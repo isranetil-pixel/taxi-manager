@@ -1620,8 +1620,9 @@ if (!user) return <Login onLogin={setUser} />
       <div className="stat-card">
         <div className="stat-icon green">₪</div>
         <p>הכנסות שהתקבלו</p>
-        <h2>₪{collectedIncome.toLocaleString('he-IL')}</h2>
-        <small>תשלומים שנרשמו בחודש הנבחר</small>
+<h2 style={{ color: '#16a34a' }}>
+  ₪{collectedIncome.toLocaleString('he-IL')}
+</h2>        <small>תשלומים שנרשמו בחודש הנבחר</small>
       </div>
 
       <div className="stat-card">
@@ -1634,8 +1635,9 @@ if (!user) return <Login onLogin={setUser} />
       <div className="stat-card">
         <div className="stat-icon orange">⏳</div>
         <p>טרם התקבלו</p>
-        <h2>₪{unpaidIncome.toLocaleString('he-IL')}</h2>
-        <small>יתרה שעדיין לא שולמה</small>
+<h2 style={{ color: '#dc2626' }}>
+  ₪{unpaidIncome.toLocaleString('he-IL')}
+</h2>        <small>יתרה שעדיין לא שולמה</small>
       </div>
 
       <div className="stat-card">
