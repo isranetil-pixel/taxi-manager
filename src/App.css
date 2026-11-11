@@ -344,6 +344,13 @@ footer {
 @media (max-width: 650px) {
   .app {
     flex-direction: column;
+    .vehicle-number {
+  white-space: nowrap;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  direction: ltr;
+  display: inline-block;
+}
   }
 
   .sidebar {
