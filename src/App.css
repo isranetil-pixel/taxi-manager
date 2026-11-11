@@ -243,7 +243,15 @@ button, input {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap table {
+  min-width: 700px;
+  width: max-content;
 }
 
 table {
