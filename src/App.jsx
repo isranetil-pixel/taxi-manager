@@ -351,21 +351,32 @@ if (error) {
     ))
   }
 
-  function deleteDriver(id) {
-    if (!window.confirm('למחוק את הנהג מהמערכת?')) return
 
-    const driver = drivers.find(d => d.id === id)
+async function deleteDriver(id) {
+  if (!window.confirm('למחוק את הנהג מהמערכת?')) return
 
-    setDrivers(drivers.filter(d => d.id !== id))
+  const driver = drivers.find(d => d.id === id)
 
-    if (driver?.vehicleId) {
-      setVehicles(vehicles.map(v =>
-        v.id === driver.vehicleId
-          ? { ...v, driver: 'לא משויך', status: 'פנוי' }
-          : v
-      ))
-    }
+  const { error } = await supabase
+    .from('drivers')
+    .delete()
+    .eq('id', String(id))
+
+  if (error) {
+    alert('שגיאה במחיקת הנהג: ' + error.message)
+    return
   }
+
+  setDrivers(prev => prev.filter(d => d.id !== id))
+
+  if (driver?.vehicleId) {
+    setVehicles(prev => prev.map(v =>
+      v.id === driver.vehicleId
+        ? { ...v, driver: 'לא משויך', status: 'פנוי' }
+        : v
+    ))
+  }
+}
 
 
 function currentMonth() {
