@@ -1,0 +1,701 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Heebo', Arial, sans-serif;
+  background: #f4f6fa;
+  color: #202938;
+}
+
+button, input {
+  font-family: inherit;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 255px;
+  background: #172235;
+  color: white;
+  padding: 28px 18px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 35px;
+  border-bottom: 1px solid #344154;
+}
+
+.brand-icon {
+  font-size: 32px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 7px;
+}
+
+.brand h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.brand span {
+  color: #aab5c6;
+  font-size: 12px;
+}
+
+.menu-title {
+  color: #93a0b2;
+  font-size: 13px;
+  margin: 30px 10px 12px;
+}
+
+.menu-item {
+  padding: 14px 12px;
+  margin-bottom: 7px;
+  border-radius: 9px;
+  color: #d4dce7;
+  font-size: 14px;
+}
+
+.menu-item.active {
+  background: #f58220;
+  color: white;
+  font-weight: 700;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #aab5c6;
+  font-size: 12px;
+  padding: 20px 5px 0;
+}
+
+.sidebar-bottom strong {
+  color: #fff;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 30px 35px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 27px;
+}
+
+.topbar p {
+  margin: 5px 0 0;
+  color: #788497;
+  font-size: 14px;
+}
+
+.user-avatar {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: #ffead8;
+  color: #e77718;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.welcome {
+  margin: 28px 0;
+  padding: 25px;
+  background: linear-gradient(110deg, #202e43, #35465f);
+  border-radius: 15px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.welcome h2 {
+  margin: 0 0 7px;
+  font-size: 22px;
+}
+
+.welcome p {
+  margin: 0;
+  color: #d1d9e4;
+  font-size: 14px;
+}
+
+.add-button {
+  border: 0;
+  background: #f58220;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  background: #df6e12;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 27px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 13px;
+  padding: 20px;
+  box-shadow: 0 3px 12px #1722350a;
+}
+
+.stat-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 21px;
+}
+
+.orange { background: #fff0e2; }
+.green { background: #e4f7eb; color: #1b9c58; }
+.blue { background: #e5f1ff; }
+.purple { background: #f0eaff; color: #8054d8; }
+
+.stat-card p {
+  color: #778397;
+  font-size: 13px;
+  margin: 16px 0 5px;
+}
+
+.stat-card h2 {
+  font-size: 25px;
+  margin: 0 0 5px;
+  color: #1c293b;
+}
+
+.stat-card small {
+  color: #9aa4b2;
+  font-size: 11px;
+}
+
+.table-card, .form-card {
+  background: white;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 3px 12px #1722350a;
+  margin-bottom: 25px;
+}
+
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.table-heading h2, .form-card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.table-heading p {
+  margin: 5px 0 0;
+  color: #8b96a5;
+  font-size: 13px;
+}
+
+.count {
+  background: #fff0e2;
+  color: #e77918;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 13px;
+}
+
+th {
+  background: #f7f8fa;
+  color: #7d899a;
+  font-weight: 600;
+}
+
+th, td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rented {
+  background: #e4f7eb;
+  color: #16884a;
+}
+
+.available {
+  background: #e5f1ff;
+  color: #2771bb;
+}
+
+.status-button, .cancel-button {
+  padding: 7px 11px;
+  border: 1px solid #e3e7ed;
+  border-radius: 7px;
+  background: white;
+  color: #34445a;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.status-button:hover {
+  border-color: #f58220;
+  color: #e77718;
+}
+
+.form-card form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-card input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce2e9;
+  border-radius: 8px;
+  font-size: 13px;
+  direction: rtl;
+}
+
+.form-card input:focus {
+  outline: 2px solid #f5822044;
+  border-color: #f58220;
+}
+
+footer {
+  text-align: center;
+  color: #9aa4b2;
+  font-size: 12px;
+  padding: 15px;
+}
+
+@media (max-width: 950px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .brand {
+    padding-bottom: 12px;
+  }
+
+  .menu-title, .menu-item, .sidebar-bottom {
+    display: none;
+  }
+
+  .main {
+    padding: 18px 12px;
+  }
+
+  .welcome {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .stats {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 13px;
+  }
+
+  .stat-card h2 {
+    font-size: 20px;
+  }
+
+  .form-card form {
+    grid-template-columns: 1fr;
+  }
+
+  .table-card {
+    padding: 14px;
+  }
+}
+
+.menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: right;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.menu-item.active {
+  background: #f58220;
+  color: white;
+}
+
+.empty-message {
+  text-align: center;
+  color: #8994a3;
+  padding: 25px;
+}
+
+.form-card select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce2e9;
+  border-radius: 8px;
+  font-family: inherit;
+  direction: rtl;
+  background: white;
+}
+
+/* עיצוב משודרג לעמוד חוזים ושכירויות */
+
+.table-card {
+  border: 1px solid #edf0f4;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 8px 25px rgba(23, 34, 53, 0.06);
+}
+
+.table-card h2 {
+  color: #172235;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.table-card table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.table-card th {
+  background: #f1f4f8;
+  color: #536176;
+  font-weight: 700;
+  padding: 17px 14px;
+}
+
+.table-card td {
+  padding: 17px 14px;
+  background: #fff;
+}
+
+.table-card tbody tr:hover td {
+  background: #fffaf5;
+}
+
+.table-card button {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 15px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+  margin: 2px;
+}
+
+.table-card button:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+.table-card button:first-of-type {
+  background: #e5f6eb;
+  color: #16884a;
+}
+
+.table-card button:last-of-type {
+  background: #fff0e2;
+  color: #d96b12;
+}
+
+.table-card > button {
+  background: #f58220 !important;
+  color: white !important;
+  padding: 12px 20px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.form-card {
+  border: 1px solid #edf0f4;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(23, 34, 53, 0.06);
+}
+
+.form-card button {
+  background: #f58220;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  padding: 12px 20px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .table-card {
+    padding: 16px;
+  }
+
+  .table-card th,
+  .table-card td {
+    padding: 12px 9px;
+  }
+}
+
+/* ===== עיצוב טופס חוזה חדש ===== */
+
+
+.vehicle-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  direction: rtl;
+  background: #f8f9fc;
+  padding: 25px;
+  margin-top: 20px;
+  border-radius: 14px;
+  border: 1px solid #e8edf3;
+}
+
+.vehicle-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #34445a;
+}
+
+.vehicle-form input,
+.vehicle-form select {
+  width: 100%;
+  height: 46px;
+  padding: 10px 13px;
+  border: 1px solid #dce2e9;
+  border-radius: 9px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  direction: rtl;
+}
+
+.vehicle-form button {
+  grid-column: 1 / -1;
+  height: 48px;
+  background: #f58220;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vehicle-form button:hover {
+  background: #df6e12;
+}
+
+@media (max-width: 750px) {
+  .vehicle-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* התאמה למסכים קטנים */
+@media (max-width: 650px) {
+  .vehicle-form {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+}
+
+/* תיבת בחירת נהג מעוצבת */
+.custom-select {
+  width: 100%;
+  position: relative;
+  direction: rtl;
+}
+
+.custom-select details {
+  width: 100%;
+  position: relative;
+}
+
+.custom-select summary {
+  list-style: none;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #dce2e9;
+  border-radius: 9px;
+  padding: 14px 16px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #263449;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.custom-select summary::-webkit-details-marker {
+  display: none;
+}
+
+.custom-select summary:hover,
+.custom-select details[open] summary {
+  border-color: #f58220;
+}
+
+.custom-select details[open] summary span {
+  transform: rotate(180deg);
+}
+
+.custom-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #e1e6ed;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px #17223520;
+  padding: 6px;
+  z-index: 100;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.custom-select details[open] .custom-options {
+  display: flex;
+}
+
+.custom-options button {
+  width: 100%;
+  border: none;
+  background: white;
+  padding: 12px;
+  border-radius: 7px;
+  text-align: right;
+  font-family: inherit;
+  font-size: 14px;
+  color: #263449;
+  cursor: pointer;
+}
+
+.custom-options button:hover {
+  background: #fff0e2;
+  color: #e77718;
+}
+
+
+/* תיקון פריסת טופס החוזים */
+.vehicle-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  direction: rtl;
+  padding: 25px;
+}
+
+.vehicle-form label {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 2px;
+  text-align: right;
+}
+
+.vehicle-form input,
+.vehicle-form select,
+.vehicle-form .custom-select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.vehicle-form input,
+.vehicle-form select {
+  height: 48px;
+}
+
+.vehicle-form button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.vehicle-form {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
