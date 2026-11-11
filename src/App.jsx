@@ -310,6 +310,40 @@ const [editingVehicleId, setEditingVehicleId] = useState(null)
   setShowForm(false)
 }
 
+async function deleteVehicle(id) {
+  if (!window.confirm('האם למחוק את הרכב לצמיתות?')) return
+
+  const activeContract = contracts.find(
+    c => Number(c.vehicleId) === Number(id) && c.active !== false
+  )
+
+  if (activeContract) {
+    alert('לא ניתן למחוק רכב שמשויך לחוזה פעיל. יש לסיים את החוזה תחילה.')
+    return
+  }
+
+  const { error } = await supabase
+    .from('vehicles')
+    .delete()
+    .eq('id', String(id))
+
+  if (error) {
+    alert('שגיאה במחיקת הרכב: ' + error.message)
+    return
+  }
+
+  setVehicles(prev => prev.filter(v => v.id !== id))
+
+  const updatedDrivers = drivers.map(d =>
+    Number(d.vehicleId) === Number(id)
+      ? { ...d, vehicleId: null }
+      : d
+  )
+
+  setDrivers(updatedDrivers)
+
+  alert('הרכב נמחק בהצלחה')
+}
   async function addDriver(e) {
     e.preventDefault()
 
@@ -784,6 +818,12 @@ if (!user) return <Login onLogin={setUser} />
   >
     ✏️ עריכה
   </button>
+  <button
+  className="cancel-button"
+  onClick={() => deleteVehicle(v.id)}
+>
+  🗑️ מחיקת רכב
+</button>
 </td>
                       </tr>
                     ))}
