@@ -176,6 +176,7 @@ useEffect(() => {
 }, [drivers, loadingDrivers]) 
 const [contracts, setContracts] = useState([])
 const [loadingContracts, setLoadingContracts] = useState(true)
+const [editingContractId, setEditingContractId] = useState(null)
 
 useEffect(() => {
   async function loadContracts() {
@@ -308,6 +309,7 @@ const maxAnnualIncome = Math.max(
   monthly: '',
   deposit: '',
   startDate: '',
+  endDate: '',
   dueDay: '10'
 })
 
@@ -583,6 +585,21 @@ function currentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
+function editContract(contract) {
+  setEditingContractId(contract.id)
+
+  setNewContract({
+    driverId: String(contract.driverId),
+    monthly: String(contract.monthly ?? ''),
+    deposit: String(contract.deposit ?? ''),
+    startDate: contract.startDate || '',
+endDate: contract.endDate || '',
+dueDay: String(contract.dueDay ?? '10')
+  })
+
+  setShowForm(true)
+}
+
 async function addContract(e) {
   e.preventDefault()
 
@@ -592,6 +609,51 @@ async function addContract(e) {
 
   if (!driver) return
 
+  if (editingContractId !== null) {
+  const existingContract = contracts.find(
+    c => c.id === editingContractId
+  )
+
+  if (!existingContract) return
+
+  const updatedContract = {
+    ...existingContract,
+    driverId: driver.id,
+    driverName: driver.name,
+    vehicleId: driver.vehicleId,
+    monthly: Number(newContract.monthly),
+    deposit: Number(newContract.deposit),
+    startDate: newContract.startDate,
+endDate: newContract.endDate,
+dueDay: Number(newContract.dueDay)
+  }
+
+  const { error } = await supabase.from('contracts').upsert({
+    id: String(updatedContract.id),
+    data: updatedContract
+  })
+
+  if (error) {
+    alert('שגיאה בעדכון החוזה: ' + error.message)
+    return
+  }
+
+  setContracts(contracts.map(c =>
+    c.id === updatedContract.id ? updatedContract : c
+  ))
+
+  setEditingContractId(null)
+  setNewContract({
+    driverId: '',
+    monthly: '',
+    deposit: '',
+    startDate: '',
+    dueDay: '10'
+  })
+  setShowForm(false)
+  return
+}
+
   const contract = {
     id: Date.now(),
     driverId: driver.id,
@@ -600,7 +662,8 @@ async function addContract(e) {
     monthly: Number(newContract.monthly),
     deposit: Number(newContract.deposit),
     startDate: newContract.startDate,
-    dueDay: Number(newContract.dueDay),
+endDate: newContract.endDate,
+dueDay: Number(newContract.dueDay),
     paidMonth: '',
     active: true
   }
@@ -623,6 +686,7 @@ if (error) {
     monthly: '',
     deposit: '',
     startDate: '',
+    endDate: '',
     dueDay: '10'
   })
 
@@ -696,7 +760,8 @@ async function endContract(id) {
   const updatedContract = {
     ...contract,
     active: false,
-    endedAt: new Date().toISOString()
+    endedAt: new Date().toISOString(),
+    endDate: new Date().toISOString().slice(0, 10),
   }
 
   const { error } = await supabase
@@ -722,6 +787,41 @@ async function endContract(id) {
   ))
 
   alert('החוזה הסתיים בהצלחה')
+}
+
+async function reactivateContract(id) {
+  const contract = contracts.find(c => String(c.id) === String(id))
+  if (!contract) return
+
+  const updatedContract = {
+    ...contract,
+    active: true,
+    endedAt: null
+  }
+
+  const { error } = await supabase
+    .from('contracts')
+    .upsert({
+      id: String(id),
+      data: updatedContract
+    })
+
+  if (error) {
+    alert('שגיאה בהפעלת החוזה: ' + error.message)
+    return
+  }
+
+  setContracts(prev => prev.map(c =>
+    String(c.id) === String(id) ? updatedContract : c
+  ))
+
+  setVehicles(prev => prev.map(v =>
+    Number(v.id) === Number(contract.vehicleId)
+      ? { ...v, status: 'מושכר' }
+      : v
+  ))
+
+  alert('החוזה הופעל מחדש בהצלחה')
 }
 
 async function uploadContractFile(contractId, file) {
@@ -1167,7 +1267,17 @@ if (!user) return <Login onLogin={setUser} />
                 <p>ניהול פרטי נהגים ושיוך לרכבים.</p>
               </div>
               <button className="add-button"
-                onClick={() => setShowForm(!showForm)}>
+                onClick={() => {
+  setShowForm(!showForm)
+  setEditingContractId(null)
+  setNewContract({
+    driverId: '',
+    monthly: '',
+    deposit: '',
+    startDate: '',
+    dueDay: '10'
+  })
+}}>
                 + הוספת נהג חדש
               </button>
             </section>
@@ -1551,7 +1661,15 @@ if (!user) return <Login onLogin={setUser} />
   })}
   required
 />
-
+<label>תאריך סיום חוזה</label>
+<input
+  type="date"
+  value={newContract.endDate}
+  onChange={e => setNewContract({
+    ...newContract,
+    endDate: e.target.value
+  })}
+/>
         <label>יום תשלום בחודש</label>
         <input
           type="number"
@@ -1565,7 +1683,9 @@ if (!user) return <Login onLogin={setUser} />
           required
         />
 
-        <button type="submit">שמור חוזה</button>
+        <button type="submit">
+  {editingContractId !== null ? 'עדכן חוזה' : 'שמור חוזה'}
+</button>
       </form>
     )}
 
@@ -1620,7 +1740,21 @@ if (!user) return <Login onLogin={setUser} />
               <span>יום תשלום</span>
               <strong>{contract.dueDay}</strong>
             </div>
+<div>
+  <span>תאריך תחילת חוזה</span>
+  <strong>{contract.startDate || 'לא הוגדר'}</strong>
+</div>
 
+<div>
+  <span>תאריך סיום חוזה</span>
+  <strong>
+    {contract.active === false
+      ? (contract.endedAt
+          ? new Date(contract.endedAt).toLocaleDateString('he-IL')
+          : 'לא ידוע')
+      : (contract.endDate || 'לא הוגדר')}
+  </strong>
+</div>
             <div>
               <span>סטטוס</span>
               <strong>{contractStatus(contract)}</strong>
@@ -1628,6 +1762,13 @@ if (!user) return <Login onLogin={setUser} />
           </div>
 
           <div className="contract-action-bar">
+            <button
+  type="button"
+  className="contract-btn"
+  onClick={() => editContract(contract)}
+>
+  ✏️ עריכת חוזה
+</button>
             {contractStatus(contract) !== 'שולם' &&
              contract.active !== false && (
               <button
@@ -1650,6 +1791,20 @@ if (!user) return <Login onLogin={setUser} />
                 סיום חוזה
               </button>
             )}
+
+            {contract.active === false && (
+  <button
+    type="button"
+    className="contract-btn paid"
+    onClick={() => {
+      if (window.confirm('האם להפעיל מחדש את החוזה?')) {
+reactivateContract(contract.id)
+      }
+    }}
+  >
+    ↻ הפעל חוזה מחדש
+  </button>
+)}
 
             <label className="contract-btn upload">
               📎 העלאת מסמך
