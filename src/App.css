@@ -345,9 +345,7 @@ footer {
     padding-bottom: 12px;
   }
 
-  .menu-title, .menu-item, .sidebar-bottom {
-    display: none;
-  }
+ 
 
   .main {
     padding: 18px 12px;
@@ -698,4 +696,40 @@ footer {
   max-width: 760px;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .sidebar .menu-item {
+    width: 100%;
+    text-align: right;
+  }
+}
+
+@media (max-width: 650px) {
+  .sidebar {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .sidebar .menu-title,
+  .sidebar .menu-item {
+    display: block;
+    width: 100%;
+    text-align: right;
+  }
+
+  .sidebar .sidebar-bottom {
+    display: none;
+  }
+
+  .main {
+    width: 100%;
+    padding: 15px 10px;
+  }
 }
