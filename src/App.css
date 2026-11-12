@@ -1489,3 +1489,14 @@ footer {
   color: inherit;
   padding: 4px 8px;
 }
+
+.drivers-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.drivers-cards-list .contract-card {
+  margin-bottom: 0;
+  width: 100%;
+}

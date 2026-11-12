@@ -1525,68 +1525,87 @@ if (!user) return <Login onLogin={setUser} />
                 </form>
               </section>
             )}
+            
+<section className="table-card">
+  <h2>🚕 רשימת הרכבים</h2>
 
-            <section className="table-card">
-              <h2>רשימת הרכבים</h2>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>דגם</th><th>מספר רישוי</th><th>נהג</th>
-                      <th>שכירות</th><th>סטטוס</th><th>פעולה</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vehicles.map(v => (
-  <Fragment key={v.id}>
-    <tr>
-                        <td>{v.name}</td>
-                        <td>{v.plate}</td>
-                        <td>{v.driver}</td>
-                        <td>₪{v.price.toLocaleString('he-IL')}</td>
-                        <td>{v.status}</td>
-                        <td>
-  <button
-    className="status-button"
-    onClick={() => toggleStatus(v.id)}
-  >
-    {v.status === 'מושכר' ? 'שחרור רכב' : 'השכרת רכב'}
-  </button>
+  <div className="vehicles-cards-list">
+    {vehicles.map(v => (
+      <div className="contract-card" key={v.id}>
 
-  <button
-    className="status-button"
-    onClick={() => {
-  setEditingVehicleId(v.id)
-  setNewVehicle({
-    name: v.name,
-    plate: v.plate,
-    year: String(v.year),
-    driver: v.driver,
-    price: String(v.price)
-  })
-  setShowForm(true)
-}}
-  >
-    ✏️ עריכה
-  </button>
-  <button
-  className="cancel-button"
-  onClick={() => {
-  showSystemModal(
-    'מחיקת רכב',
-    'האם למחוק את הרכב לצמיתות?',
-    'confirm',
-    () => deleteVehicle(v.id, true)
-  )
-}}
->
-  🗑️ מחיקת רכב
-</button>
-</td>
-                        </tr>
-                            {editingVehicleId === v.id && (
-      <tr>
-        <td colSpan={6}>
+        <div className="contract-details">
+          <div>
+            <span>דגם הרכב</span>
+            <strong>{v.name}</strong>
+          </div>
+
+          <div>
+            <span>מספר רישוי</span>
+            <strong>{v.plate}</strong>
+          </div>
+
+          <div>
+            <span>שנת ייצור</span>
+            <strong>{v.year || 'לא הוזן'}</strong>
+          </div>
+
+          <div>
+            <span>נהג משויך</span>
+            <strong>{v.driver || 'ללא נהג'}</strong>
+          </div>
+
+          <div>
+            <span>שכירות חודשית</span>
+            <strong>₪{Number(v.price || 0).toLocaleString('he-IL')}</strong>
+          </div>
+
+          <div>
+            <span>סטטוס</span>
+            <strong>{v.status}</strong>
+          </div>
+        </div>
+
+        <div className="contract-action-bar">
+          <button
+            className="status-button"
+            onClick={() => toggleStatus(v.id)}
+          >
+            {v.status === 'מושכר' ? 'שחרור רכב' : 'השכרת רכב'}
+          </button>
+
+          <button
+            className="status-button"
+            onClick={() => {
+              setEditingVehicleId(v.id)
+              setNewVehicle({
+                name: v.name,
+                plate: v.plate,
+                year: String(v.year),
+                driver: v.driver,
+                price: String(v.price)
+              })
+              setShowForm(true)
+            }}
+          >
+            ✏️ עריכה
+          </button>
+
+          <button
+            className="cancel-button"
+            onClick={() => {
+              showSystemModal(
+                'מחיקת רכב',
+                'האם למחוק את הרכב?',
+                'confirm',
+                () => deleteVehicle(v.id, true)
+              )
+            }}
+          >
+            🗑️ מחיקת רכב
+          </button>
+        </div>
+
+        {editingVehicleId === v.id && (
           <section className="form-card">
             <h2>עריכת פרטי רכב – {v.name}</h2>
 
@@ -1657,73 +1676,75 @@ if (!user) return <Login onLogin={setUser} />
               </button>
             </form>
           </section>
-        </td>
-      </tr>
-    )}
-  </Fragment>
-))}
-                  </tbody>
-                </table>
-                         </div>
-            </section>
+        )}
+      </div>
+    ))}
+  </div>
+</section>
 
-            <section className="table-card">
-              <h2>🗑️ רכבים שנמחקו</h2>
+<section className="table-card">
+  <h2>🗑️ רכבים שנמחקו</h2>
 
-              {deletedVehicles.length === 0 ? (
-                <p>אין כרגע רכבים בארכיון.</p>
-              ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>דגם</th>
-                        <th>מספר רישוי</th>
-                        <th>שנת ייצור</th>
-                        <th>פעולה</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deletedVehicles.map(v => (
-                        <tr key={v.id}>
-                          <td>{v.name}</td>
-                          <td>{v.plate}</td>
-                          <td>{v.year}</td>
-                          <td>
-                            <button
-                              className="status-button"
-                              onClick={() => {
-                                showSystemModal(
-                                  'שחזור רכב',
-                                  `האם לשחזר את ${v.name} (${v.plate})?`,
-                                  'confirm',
-                                  () => restoreVehicle(v.id)
-                                )
-                              }}
-                            >
-                              ♻️ שחזור רכב
-                            </button>
-                            <button
-  className="contract-btn delete"
-  onClick={() => {
-    showSystemModal(
-      'מחיקת רכב לצמיתות',
-      `האם למחוק את ${v.name} (${v.plate}) לצמיתות? לא ניתן יהיה לשחזר אותו.`,
-      'confirm',
-      () => permanentlyDeleteVehicle(v.id)
-    )
-  }}
->
-  🗑️ מחיקה לצמיתות
-</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+  {deletedVehicles.length === 0 ? (
+    <p>אין כרגע רכבים בארכיון.</p>
+  ) : (
+    <div className="vehicles-cards-list">
+      {deletedVehicles.map(v => (
+        <div className="contract-card" key={v.id}>
+
+          <div className="contract-details">
+            <div>
+              <span>דגם הרכב</span>
+              <strong>{v.name}</strong>
+            </div>
+
+            <div>
+              <span>מספר רישוי</span>
+              <strong>{v.plate}</strong>
+            </div>
+
+            <div>
+              <span>שנת ייצור</span>
+              <strong>{v.year}</strong>
+            </div>
+          </div>
+
+          <div className="contract-action-bar">
+            <button
+              className="status-button"
+              onClick={() => {
+                showSystemModal(
+                  'שחזור רכב',
+                  `האם לשחזר את ${v.name} (${v.plate})?`,
+                  'confirm',
+                  () => restoreVehicle(v.id)
+                )
+              }}
+            >
+              ♻️ שחזור רכב
+            </button>
+
+            <button
+              className="contract-btn delete"
+              onClick={() => {
+                showSystemModal(
+                  'מחיקת רכב לצמיתות',
+                  `האם למחוק את ${v.name} (${v.plate}) לצמיתות? לא ניתן יהיה לשחזר אותו.`,
+                  'confirm',
+                  () => permanentlyDeleteVehicle(v.id)
+                )
+              }}
+            >
+              🗑️ מחיקה לצמיתות
+            </button>
+          </div>
+
+        </div>
+      ))}
+    </div>
+  )}
+</section>
+
           </>
         )}
 
@@ -1816,31 +1837,9 @@ if (!user) return <Login onLogin={setUser} />
                 <span className="count">{drivers.length} נהגים</span>
               </div>
 
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>שם הנהג</th>
-                      <th>טלפון</th>
-                      <th>תעודת זהות</th>
-                      <th>רכב משויך</th>
-                      <th>שכירות חודשית</th>
-                      <th>יתרה לתשלום</th>
-                      <th>פעולות</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {drivers.map(d => (
-                      <tr key={d.id}>
-                        <td><strong>{d.name}</strong></td>
-                        <td>{d.phone}</td>
-                        <td>{d.idNumber || 'לא הוזן'}</td>
-                        <td>
-                          {vehicles.find(v => v.id === d.vehicleId)?.name || 'ללא רכב'}
-                        </td>
-                        <td>₪{d.price.toLocaleString('he-IL')}</td>
-                        <td>
-  {(() => {
+              
+<div className="drivers-cards-list">
+  {drivers.map(d => {
     const driverContracts = contracts.filter(
       c => String(c.driverId) === String(d.id) && c.active !== false
     )
@@ -1855,63 +1854,108 @@ if (!user) return <Login onLogin={setUser} />
         .reduce((total, p) => total + Number(p.amount || 0), 0)
     }, 0)
 
-    return `₪${Math.max(0, monthlyCharge - totalPaid).toLocaleString('he-IL')}`
-  })()}
-</td>
-                        <td>{d.active ? 'פעיל' : 'לא פעיל'}</td>
-                        <td>
-                          {d.phone && (
-  <>
-    <a
-      href={`tel:${String(d.phone).replace(/[^\d+]/g, '')}`}
-      className="status-button"
-      style={{
-        display: 'inline-block',
-        textDecoration: 'none',
-        marginLeft: '5px'
-      }}
-    >
-      📞 התקשר
-    </a>
+    const balance = Math.max(0, monthlyCharge - totalPaid)
 
-    <a
-      href={`https://wa.me/${String(d.phone).replace(/\D/g, '').replace(/^0/, '972')}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="status-button"
-      style={{
-        display: 'inline-block',
-        textDecoration: 'none',
-        marginLeft: '5px',
-        background: '#25D366',
-        color: '#ffffff'
-      }}
-    >
-      💬 WhatsApp
-    </a>
-   </>
-)}
-{' '}
-<button className="status-button"
-  onClick={() => editDriver(d)}>
-  עריכה
-</button>
-{' '}
-                          <button className="status-button"
-                            onClick={() => toggleDriver(d.id)}>
-                            {d.active ? 'השבתה' : 'הפעלה'}
-                          </button>
-                          {' '}
-                          <button className="cancel-button"
-                            onClick={() => deleteDriver(d.id)}>
-                            מחיקה
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+    const vehicle = vehicles.find(
+      v => Number(v.id) === Number(d.vehicleId)
+    )
+
+    return (
+      <div className="contract-card" key={d.id}>
+        <div className="contract-details">
+
+          <div>
+            <span>שם הנהג</span>
+            <strong>{d.name}</strong>
+          </div>
+
+          <div>
+            <span>טלפון</span>
+            <strong>{d.phone || 'לא הוזן'}</strong>
+          </div>
+
+          <div>
+            <span>תעודת זהות</span>
+            <strong>{d.idNumber || 'לא הוזן'}</strong>
+          </div>
+
+          <div>
+            <span>רכב משויך</span>
+            <strong>{vehicle?.name || 'ללא רכב'}</strong>
+          </div>
+
+          <div>
+            <span>שכירות חודשית</span>
+            <strong>₪{Number(d.price || 0).toLocaleString('he-IL')}</strong>
+          </div>
+
+          <div>
+            <span>יתרה לתשלום</span>
+            <strong>₪{balance.toLocaleString('he-IL')}</strong>
+          </div>
+
+          <div>
+            <span>סטטוס</span>
+            <strong>{d.active ? 'פעיל' : 'לא פעיל'}</strong>
+          </div>
+
+        </div>
+
+        <div className="contract-action-bar">
+
+          {d.phone && (
+            <>
+              <a
+                href={`tel:${String(d.phone).replace(/[^\d+]/g, '')}`}
+                className="status-button"
+                style={{ textDecoration: 'none' }}
+              >
+                📞 התקשר
+              </a>
+
+              <a
+                href={`https://wa.me/${String(d.phone).replace(/\D/g, '').replace(/^0/, '972')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="status-button"
+                style={{
+                  textDecoration: 'none',
+                  background: '#25D366',
+                  color: '#ffffff'
+                }}
+              >
+                💬 WhatsApp
+              </a>
+            </>
+          )}
+
+          <button
+            className="status-button"
+            onClick={() => editDriver(d)}
+          >
+            ✏️ עריכה
+          </button>
+
+          <button
+            className="status-button"
+            onClick={() => toggleDriver(d.id)}
+          >
+            {d.active ? 'השבתה' : 'הפעלה'}
+          </button>
+
+          <button
+            className="cancel-button"
+            onClick={() => deleteDriver(d.id)}
+          >
+            🗑️ מחיקה
+          </button>
+
+        </div>
+      </div>
+    )
+  })}
+</div>
+
 
               {drivers.length === 0 && (
                 <p className="empty-message">עדיין לא הוזנו נהגים. לחץ על הוספת נהג חדש כדי להתחיל.</p>
