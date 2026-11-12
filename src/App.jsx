@@ -465,8 +465,15 @@ const [editingVehicleId, setEditingVehicleId] = useState(null)
 }
 
 async function deleteVehicle(id, skipConfirm = false) {
-  if (!skipConfirm && !window.confirm('האם למחוק את הרכב לצמיתות?')) return
-
+ if (!skipConfirm) {
+  showSystemModal(
+    'מחיקת רכב',
+    'האם אתה בטוח שברצונך למחוק את הרכב לצמיתות?',
+    'confirm',
+    () => deleteVehicle(id, true)
+  )
+  return
+}
   const activeContract = contracts.find(
     c => Number(c.vehicleId) === Number(id) && c.active !== false
   )
@@ -706,8 +713,18 @@ async function restoreVehicle(id) {
 }
 
 
-async function deleteDriver(id) {
-  if (!window.confirm('למחוק את הנהג מהמערכת?')) return
+
+
+async function deleteDriver(id, skipConfirm = false) {
+  if (!skipConfirm) {
+    showSystemModal(
+      'מחיקת נהג',
+      'האם אתה בטוח שברצונך למחוק את הנהג מהמערכת?',
+      'confirm',
+      () => deleteDriver(id, true)
+    )
+    return
+  }
 
   const driver = drivers.find(d => d.id === id)
 
@@ -717,7 +734,10 @@ async function deleteDriver(id) {
     .eq('id', String(id))
 
   if (error) {
-    alert('שגיאה במחיקת הנהג: ' + error.message)
+    showSystemModal(
+      'שגיאה במחיקת נהג',
+      'לא ניתן למחוק את הנהג: ' + error.message
+    )
     return
   }
 
@@ -730,7 +750,14 @@ async function deleteDriver(id) {
         : v
     ))
   }
+
+  showSystemModal(
+    'המחיקה הושלמה',
+    'הנהג נמחק בהצלחה מהמערכת.'
+  )
 }
+
+
 
 
 function currentMonth() {
@@ -1789,7 +1816,7 @@ if (!user) return <Login onLogin={setUser} />
               </div>
             </section>
 
-            {showForm && (
+            {showForm && editingDriverId === null && (
               <section className="form-card">
                 <h2>{editingDriverId !== null ? 'עריכת פרטי נהג' : 'הוספת נהג חדש'}</h2>
                 <form onSubmit={saveDriver}>
@@ -1951,6 +1978,62 @@ if (!user) return <Login onLogin={setUser} />
           </button>
 
         </div>
+                {showForm && String(editingDriverId) === String(d.id) && (
+          <section className="form-card">
+            <h2>עריכת פרטי נהג – {d.name}</h2>
+            <form onSubmit={saveDriver}>
+              <input
+                placeholder="שם מלא"
+                required
+                value={newDriver.name}
+                onChange={e => setNewDriver({...newDriver, name: e.target.value})}
+              />
+              <input
+                placeholder="מספר טלפון"
+                required
+                type="tel"
+                value={newDriver.phone}
+                onChange={e => setNewDriver({...newDriver, phone: e.target.value})}
+              />
+              <input
+                placeholder="מספר תעודת זהות"
+                value={newDriver.idNumber}
+                onChange={e => setNewDriver({...newDriver, idNumber: e.target.value})}
+              />
+              <select
+                value={newDriver.vehicleId}
+                onChange={e => setNewDriver({...newDriver, vehicleId: e.target.value})}
+              >
+                <option value="">ללא שיוך רכב</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} – {v.plate}
+                  </option>
+                ))}
+              </select>
+              <input
+                placeholder="דמי שכירות חודשיים"
+                type="number"
+                required
+                value={newDriver.price}
+                onChange={e => setNewDriver({...newDriver, price: e.target.value})}
+              />
+              <button className="add-button" type="submit">
+                שמירת שינויים
+              </button>
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => {
+                  setShowForm(false)
+                  setEditingDriverId(null)
+                }}
+              >
+                ביטול
+              </button>
+            </form>
+          </section>
+        )}
       </div>
     )
   })}

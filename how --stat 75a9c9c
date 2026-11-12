@@ -1,0 +1,9 @@
+[33mcommit 75a9c9c5dc054fde767fde41b59660a13300c187[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: Shmulik <כתובת-המייל-שלך>
+Date:   Thu Nov 12 16:36:41 2026 +0200
+
+    Update app
+
+ src/App.css | 72 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ src/App.jsx |  2 [32m+[m[31m-[m
+ 2 files changed, 73 insertions(+), 1 deletion(-)
