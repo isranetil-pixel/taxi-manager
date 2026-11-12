@@ -1312,7 +1312,7 @@ if (!user) return <Login onLogin={setUser} />
 </div>
             </section>
 
-            <section className="table-card">
+            <section className="table-card contracts-table-card">
               <div className="table-heading">
                 <div>
                   <h2>ניהול חוזי שכירות</h2>
@@ -1370,17 +1370,20 @@ if (!user) return <Login onLogin={setUser} />
 )}
 
           {contract.active !== false && (
-            <button
-              className="contract-btn end"
-              onClick={() => {
-                if (window.confirm('האם לסיים את חוזה השכירות?')) {
-                  endContract(contract.id)
-                }
-              }}
-            >
-              סיום חוזה
-            </button>
-          )}
+  <button
+    className="contract-btn end"
+    onClick={() => {
+      showSystemModal(
+        'סיום חוזה שכירות',
+        'האם אתה בטוח שברצונך לסיים את חוזה השכירות?',
+        'confirm',
+        () => endContract(contract.id)
+      )
+    }}
+  >
+    סיום חוזה
+  </button>
+)}
 
           <button
             className="contract-btn delete"
@@ -2476,20 +2479,20 @@ if (!user) return <Login onLogin={setUser} />
 )}
 
             {contract.active !== false && (
-              <button
-                className="contract-btn end"
-                onClick={() => {
-  showSystemModal(
-    'סיום חוזה',
-    'האם לסיים את חוזה השכירות?',
-    'confirm',
-    () => endContract(contract.id)
-  )
-}}
-              >
-                סיום חוזה
-              </button>
-            )}
+  <button
+    className="contract-btn end"
+    onClick={() => {
+      showSystemModal(
+        'סיום חוזה שכירות',
+        'האם אתה בטוח שברצונך לסיים את חוזה השכירות?',
+        'confirm',
+        () => endContract(contract.id)
+      )
+    }}
+  >
+    סיום חוזה
+  </button>
+)}
 
             {contract.active === false && (
   <button

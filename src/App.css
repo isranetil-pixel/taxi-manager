@@ -1568,3 +1568,61 @@ footer {
   outline: 3px solid rgba(59, 130, 246, 0.4);
   outline-offset: 3px;
 }
+
+
+/* התאמת חוזי שכירות לטלפון */
+@media (max-width: 768px) {
+  .contracts-table-card .table-wrap {
+    overflow-x: hidden !important;
+    width: 100%;
+  }
+
+  .contracts-table-card table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed;
+  }
+
+  .contracts-table-card thead {
+    display: none;
+  }
+
+  .contracts-table-card tbody,
+  .contracts-table-card tr,
+  .contracts-table-card td {
+    display: block;
+    width: 100%;
+  }
+
+  .contracts-table-card tr {
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid #e2e2e2;
+    border-radius: 12px;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .contracts-table-card td {
+    box-sizing: border-box;
+    padding: 7px 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  .contracts-table-card td:last-child {
+    padding-top: 12px;
+  }
+
+  .contracts-table-card .contract-actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .contracts-table-card .contract-actions button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
