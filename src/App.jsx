@@ -1403,7 +1403,7 @@ if (!user) return <Login onLogin={setUser} />
       <div className="modal-actions">
         {systemModal.type === 'confirm' && (
           <button
-            className="contract-btn delete"
+            className="contract-btn paid"
             onClick={() => {
               const action = systemModal.onConfirm
               closeSystemModal()
@@ -1415,7 +1415,7 @@ if (!user) return <Login onLogin={setUser} />
         )}
 
         <button
-          className="contract-btn paid"
+          className={systemModal.type === 'confirm' ? 'contract-btn delete' : 'contract-btn paid'}
           onClick={closeSystemModal}
         >
           {systemModal.type === 'confirm' ? 'ביטול' : 'סגירה'}
