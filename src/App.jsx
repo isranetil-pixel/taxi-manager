@@ -19,6 +19,33 @@ function loadData(key, fallback) {
 }
 
 function App() {const [user, setUser] = useState(null)
+  const [systemModal, setSystemModal] = useState({
+  open: false,
+  title: '',
+  message: '',
+  type: 'info',
+  onConfirm: null
+})
+
+function showSystemModal(title, message, type = 'info', onConfirm = null) {
+  setSystemModal({
+    open: true,
+    title,
+    message,
+    type,
+    onConfirm
+  })
+}
+
+function closeSystemModal() {
+  setSystemModal({
+    open: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null
+  })
+}
 const [checkingLogin, setCheckingLogin] = useState(true)
 const [installPrompt, setInstallPrompt] = useState(null)
 useEffect(() => {
@@ -68,6 +95,7 @@ async function installApp() {
 
 
   const [vehicles, setVehicles] = useState([])
+  const [deletedVehicles, setDeletedVehicles] = useState([])
 const [loadingVehicles, setLoadingVehicles] = useState(true)
 
 useEffect(() => {
@@ -92,8 +120,12 @@ useEffect(() => {
     }
 
     if (data.length > 0) {
-      setVehicles(data.map(item => item.data))
-    } else {
+  const allVehicles = data.map(item => item.data)
+
+  setVehicles(allVehicles.filter(vehicle => !vehicle.deleted))
+  setDeletedVehicles(allVehicles.filter(vehicle => vehicle.deleted))
+} 
+    else {
       const savedVehiclesFromStorage = loadData('taxi_vehicles', [])
 const savedVehicles = savedVehiclesFromStorage.length > 0 ? savedVehiclesFromStorage : initialVehicles
 
@@ -177,7 +209,10 @@ useEffect(() => {
 const [contracts, setContracts] = useState([])
 const [loadingContracts, setLoadingContracts] = useState(true)
 const [editingContractId, setEditingContractId] = useState(null)
-
+const [showPaymentModal, setShowPaymentModal] = useState(false)
+const [paymentContractId, setPaymentContractId] = useState(null)
+const [paymentAmount, setPaymentAmount] = useState('')
+const [notification, setNotification] = useState(null)
 useEffect(() => {
   async function loadContracts() {
     const { data, error } = await supabase
@@ -429,22 +464,39 @@ const [editingVehicleId, setEditingVehicleId] = useState(null)
   setShowForm(false)
 }
 
-async function deleteVehicle(id) {
-  if (!window.confirm('האם למחוק את הרכב לצמיתות?')) return
+async function deleteVehicle(id, skipConfirm = false) {
+  if (!skipConfirm && !window.confirm('האם למחוק את הרכב לצמיתות?')) return
 
   const activeContract = contracts.find(
     c => Number(c.vehicleId) === Number(id) && c.active !== false
   )
 
   if (activeContract) {
-    alert('לא ניתן למחוק רכב שמשויך לחוזה פעיל. יש לסיים את החוזה תחילה.')
+    showSystemModal(
+  'לא ניתן למחוק את הרכב',
+  'הרכב משויך לחוזה פעיל. יש לסיים את החוזה תחילה.',
+  'error'
+)
     return
   }
 
-  const { error } = await supabase
-    .from('vehicles')
-    .delete()
-    .eq('id', String(id))
+  const vehicleToDelete = vehicles.find(
+  v => String(v.id) === String(id)
+)
+
+if (!vehicleToDelete) return
+
+const deletedVehicle = {
+  ...vehicleToDelete,
+  deleted: true
+}
+
+const { error } = await supabase
+  .from('vehicles')
+  .upsert({
+    id: String(id),
+    data: deletedVehicle
+  })
 
   if (error) {
     alert('שגיאה במחיקת הרכב: ' + error.message)
@@ -461,7 +513,43 @@ async function deleteVehicle(id) {
 
   setDrivers(updatedDrivers)
 
-  alert('הרכב נמחק בהצלחה')
+  showSystemModal('הפעולה הושלמה', 'הרכב נמחק בהצלחה', 'success')
+}
+async function restoreVehicle(id) {
+  const vehicleToRestore = deletedVehicles.find(
+    v => String(v.id) === String(id)
+  )
+
+  if (!vehicleToRestore) return
+
+  const restoredVehicle = {
+    ...vehicleToRestore,
+    deleted: false
+  }
+
+  const { error } = await supabase
+    .from('vehicles')
+    .upsert({
+      id: String(id),
+      data: restoredVehicle
+    })
+
+  if (error) {
+    showSystemModal('שגיאה בשחזור הרכב', error.message, 'error')
+    return
+  }
+
+  setDeletedVehicles(prev =>
+    prev.filter(v => String(v.id) !== String(id))
+  )
+
+  setVehicles(prev => [...prev, restoredVehicle])
+
+  showSystemModal(
+    'השחזור הושלם',
+    'הרכב שוחזר בהצלחה',
+    'success'
+  )
 }
   async function saveDriver(e) {
   e.preventDefault()
@@ -761,15 +849,21 @@ async function addPayment(id, amount) {
     })
 
   if (error) {
-    alert('שגיאה בשמירת התשלום: ' + error.message)
-    return
-  }
+  setNotification({
+    type: 'error',
+    message: 'שגיאה בשמירת התשלום: ' + error.message
+  })
+  return
+}
 
   setContracts(prev => prev.map(c =>
     String(c.id) === String(id) ? updatedContract : c
   ))
 
-  alert('התשלום נשמר בהצלחה!')
+ setNotification({
+  type: 'success',
+  message: 'התשלום נשמר בהצלחה!'
+})
 }
 
 function contractStatus(contract) {
@@ -830,7 +924,7 @@ async function endContract(id) {
       : v
   ))
 
-  alert('החוזה הסתיים בהצלחה')
+  showSystemModal('הפעולה הושלמה', 'החוזה הסתיים בהצלחה', 'success')
 }
 
 async function reactivateContract(id) {
@@ -925,9 +1019,8 @@ async function openContractFile(path) {
   window.open(data.signedUrl, '_blank')
 }
 
-async function deleteContract(id) {
-  if (!window.confirm('האם למחוק את חוזה השכירות לצמיתות?')) return
-
+async function deleteContract(id, skipConfirm = false) {
+  if (!skipConfirm && !window.confirm('האם למחוק את חוזה השכירות לצמיתות?')) return
   const contract = contracts.find(c => c.id === id)
 
   const { error } = await supabase
@@ -936,7 +1029,7 @@ async function deleteContract(id) {
     .eq('id', String(id))
 
   if (error) {
-    alert('שגיאה במחיקת החוזה: ' + error.message)
+    showSystemModal('שגיאה במחיקת החוזה', error.message, 'error')
     return
   }
 
@@ -950,7 +1043,7 @@ async function deleteContract(id) {
     ))
   }
 
-  alert('החוזה נמחק בהצלחה')
+  showSystemModal('הפעולה הושלמה', 'החוזה נמחק בהצלחה', 'success')
 }
 
 
@@ -1206,13 +1299,13 @@ if (!user) return <Login onLogin={setUser} />
         <div className="contract-actions">
           {contract.active !== false && (
   <button
-    className="contract-btn paid"
+  type="button"
+  className="contract-btn paid"
     onClick={() => {
-      const amount = window.prompt('לתשלום רגיל הזן סכום חיובי. לתיקון טעות הזן סכום שלילי:')
-      if (amount !== null && amount.trim() !== '') {
-        addPayment(contract.id, amount)
-      }
-    }}
+  setPaymentContractId(contract.id)
+  setPaymentAmount('')
+  setShowPaymentModal(true)
+}}
   >
     + הוסף תשלום
   </button>
@@ -1233,7 +1326,14 @@ if (!user) return <Login onLogin={setUser} />
 
           <button
             className="contract-btn delete"
-            onClick={() => deleteContract(contract.id)}
+            onClick={() => {
+  showSystemModal(
+    'מחיקת חוזה',
+    'האם למחוק את חוזה השכירות לצמיתות?',
+    'confirm',
+    () => deleteContract(contract.id, true)
+  )
+}}
           >
             מחיקת חוזה
           </button>
@@ -1247,7 +1347,94 @@ if (!user) return <Login onLogin={setUser} />
             </section>
           </>
         )}
+            {showPaymentModal && (
+  <div className="modal-overlay">
+    <div className="modal-card">
+      <h2>הוספת תשלום</h2>
+      <p>הזן סכום לתשלום או סכום שלילי לתיקון טעות</p>
 
+      <label>סכום לתשלום (₪)</label>
+      <input
+        type="number"
+        value={paymentAmount}
+        onChange={e => setPaymentAmount(e.target.value)}
+        placeholder="לדוגמה: 1500 או -500"
+        autoFocus
+      />
+
+      <div className="modal-actions">
+        <button
+          className="contract-btn paid"
+          onClick={async () => {
+            if (paymentAmount.trim() === '') {
+  showSystemModal('בדיקת נתונים', 'יש להזין סכום', 'error')
+  return
+}
+
+            await addPayment(paymentContractId, paymentAmount)
+            setShowPaymentModal(false)
+            setPaymentContractId(null)
+            setPaymentAmount('')
+          }}
+        >
+          שמירת תשלום
+        </button>
+
+        <button
+          className="contract-btn"
+          onClick={() => {
+            setShowPaymentModal(false)
+            setPaymentContractId(null)
+            setPaymentAmount('')
+          }}
+        >
+          ביטול
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{systemModal.open && (
+  <div className="modal-overlay">
+    <div className="modal-card system-modal">
+      <h2>{systemModal.title}</h2>
+      <p>{systemModal.message}</p>
+
+      <div className="modal-actions">
+        {systemModal.type === 'confirm' && (
+          <button
+            className="contract-btn delete"
+            onClick={() => {
+              const action = systemModal.onConfirm
+              closeSystemModal()
+              if (action) action()
+            }}
+          >
+            אישור
+          </button>
+        )}
+
+        <button
+          className="contract-btn paid"
+          onClick={closeSystemModal}
+        >
+          {systemModal.type === 'confirm' ? 'ביטול' : 'סגירה'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{notification && (
+  <div className={`notification-toast ${notification.type}`}>
+    <span>{notification.message}</span>
+    <button
+      type="button"
+      onClick={() => setNotification(null)}
+    >
+      ✕
+    </button>
+  </div>
+)}
         {page === 'vehicles' && (
           <>
             <section className="welcome">
@@ -1352,7 +1539,14 @@ if (!user) return <Login onLogin={setUser} />
   </button>
   <button
   className="cancel-button"
-  onClick={() => deleteVehicle(v.id)}
+  onClick={() => {
+  showSystemModal(
+    'מחיקת רכב',
+    'האם למחוק את הרכב לצמיתות?',
+    'confirm',
+    () => deleteVehicle(v.id, true)
+  )
+}}
 >
   🗑️ מחיקת רכב
 </button>
@@ -1361,7 +1555,52 @@ if (!user) return <Login onLogin={setUser} />
                     ))}
                   </tbody>
                 </table>
-              </div>
+                         </div>
+            </section>
+
+            <section className="table-card">
+              <h2>🗑️ רכבים שנמחקו</h2>
+
+              {deletedVehicles.length === 0 ? (
+                <p>אין כרגע רכבים בארכיון.</p>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>דגם</th>
+                        <th>מספר רישוי</th>
+                        <th>שנת ייצור</th>
+                        <th>פעולה</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deletedVehicles.map(v => (
+                        <tr key={v.id}>
+                          <td>{v.name}</td>
+                          <td>{v.plate}</td>
+                          <td>{v.year}</td>
+                          <td>
+                            <button
+                              className="status-button"
+                              onClick={() => {
+                                showSystemModal(
+                                  'שחזור רכב',
+                                  `האם לשחזר את ${v.name} (${v.plate})?`,
+                                  'confirm',
+                                  () => restoreVehicle(v.id)
+                                )
+                              }}
+                            >
+                              ♻️ שחזור רכב
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </>
         )}
@@ -1946,11 +2185,10 @@ if (!user) return <Login onLogin={setUser} />
   <button
     className="contract-btn paid"
     onClick={() => {
-      const amount = window.prompt('הזן את סכום התשלום שהתקבל:')
-      if (amount !== null && amount.trim() !== '') {
-        addPayment(contract.id, amount)
-      }
-    }}
+  setPaymentContractId(contract.id)
+  setPaymentAmount('')
+  setShowPaymentModal(true)
+}}
   >
     + הוסף תשלום
   </button>
@@ -1960,10 +2198,13 @@ if (!user) return <Login onLogin={setUser} />
               <button
                 className="contract-btn end"
                 onClick={() => {
-                  if (window.confirm('האם לסיים את חוזה השכירות?')) {
-                    endContract(contract.id)
-                  }
-                }}
+  showSystemModal(
+    'סיום חוזה',
+    'האם לסיים את חוזה השכירות?',
+    'confirm',
+    () => endContract(contract.id)
+  )
+}}
               >
                 סיום חוזה
               </button>
@@ -1999,7 +2240,14 @@ reactivateContract(contract.id)
 
             <button
               className="contract-btn delete"
-              onClick={() => deleteContract(contract.id)}
+              onClick={() => {
+  showSystemModal(
+    'מחיקת חוזה',
+    'האם למחוק את חוזה השכירות לצמיתות?',
+    'confirm',
+    () => deleteContract(contract.id, true)
+  )
+}}
             >
               🗑 מחיקת חוזה
             </button>
