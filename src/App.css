@@ -1496,3 +1496,75 @@ footer {
     justify-self: center;
   }
 }
+
+/* עיצוב כפתור התקשר בכרטיסי הנהגים */
+.drivers-cards-list .contract-action-bar a[href^="tel:"] {
+  background: #e8f1ff !important;
+  color: #2457a6 !important;
+  border: 1px solid #bfd4f5 !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  padding: 12px 16px !important;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none !important;
+  box-sizing: border-box;
+}
+
+/* עיצוב כפתור השבתה בכרטיסי הנהגים */
+.drivers-cards-list .contract-action-bar > button.status-button:nth-of-type(2) {
+  background: #fff0f0 !important;
+  color: #c0392b !important;
+  border: 1px solid #f2c4c4 !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  min-height: 48px;
+  padding: 12px 16px !important;
+}
+
+/* אחידות כפתורי התקשר, WhatsApp והשבתה */
+.drivers-cards-list .contract-action-bar a[href^="tel:"],
+.drivers-cards-list .contract-action-bar a[href^="https://wa.me/"],
+.drivers-cards-list .contract-action-bar > button.status-button:nth-of-type(2) {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.status-button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
+}
+
+.status-button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3);
+}
+
+.status-button:active {
+  transform: scale(0.96);
+}
+
+.status-button:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.4);
+  outline-offset: 3px;
+}

@@ -1574,7 +1574,7 @@ if (!user) return <Login onLogin={setUser} />
           </button>
 
           <button
-            className="status-button"
+            className="status-button vehicle-edit-button"
             onClick={() => {
               setEditingVehicleId(v.id)
               setNewVehicle({
