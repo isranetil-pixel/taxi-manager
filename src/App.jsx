@@ -1860,6 +1860,20 @@ if (!user) return <Login onLogin={setUser} />
 </td>
                         <td>{d.active ? 'פעיל' : 'לא פעיל'}</td>
                         <td>
+                          {d.phone && (
+  <a
+    href={`tel:${String(d.phone).replace(/[^\d+]/g, '')}`}
+    className="status-button"
+    style={{
+      display: 'inline-block',
+      textDecoration: 'none',
+      marginLeft: '5px'
+    }}
+  >
+    📞 התקשר
+  </a>
+)}
+{' '}
                           <button className="status-button"
   onClick={() => editDriver(d)}>
   עריכה
