@@ -716,186 +716,71 @@ footer {
 }
 
 @media (max-width: 768px) {
-  .sidebar {
+
+  .driver-action-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px !important;
+    margin-top: 18px !important;
+    padding-top: 18px;
+    border-top: 1px solid #e5e7eb;
     width: 100%;
-    min-height: auto;
-    padding: 15px;
   }
 
-  .sidebar .menu-item {
-    width: 100%;
-    text-align: right;
-  }
-}
-
-@media (max-width: 650px) {
-  .sidebar {
-    width: 100%;
-    padding: 12px;
-  }
-
-  .sidebar .menu-title,
-  .sidebar .menu-item {
-    display: block;
-    width: 100%;
-    text-align: right;
-  }
-
-  .sidebar .sidebar-bottom {
-    display: none;
+  .driver-action-bar > a,
+  .driver-action-bar > button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 52px !important;
+    padding: 10px 8px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    box-sizing: border-box;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    text-align: center;
+    box-shadow: none !important;
   }
 
-  .main {
-    width: 100%;
-    padding: 15px 10px;
-  }
-}
-
-.contracts-table-wrap {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.contracts-table-wrap table {
-  min-width: 750px;
-  width: max-content;
-}
-
-
-/* ===== עיצוב מסך חוזי שכירות ===== */
-
-.contracts-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 20px;
-  border-radius: 14px;
-  border: 1px solid #e8e8e8;
-  background: #fff;
-}
-
-.contracts-table-wrap table {
-  width: 100%;
-  min-width: 850px;
-  border-collapse: separate;
-  border-spacing: 0;
-  text-align: right;
-}
-
-.contracts-table-wrap th {
-  background: #f5f6f8;
-  color: #333;
-  font-weight: 700;
-  padding: 17px 14px;
-  white-space: nowrap;
-  border-bottom: 2px solid #f58220;
-}
-
-.contracts-table-wrap td {
-  padding: 16px 14px;
-  border-bottom: 1px solid #eeeeee;
-  color: #333;
-  vertical-align: middle;
-}
-
-.contracts-table-wrap tr:last-child td {
-  border-bottom: none;
-}
-
-.contracts-table-wrap tbody tr:hover {
-  background: #fff8f1;
-}
-
-.contract-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  min-width: 250px;
-}
-
-.contract-btn {
-  border: none;
-  border-radius: 7px;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
-  white-space: nowrap;
-}
-
-.contract-btn:hover {
-  transform: translateY(-2px);
-  filter: brightness(0.95);
-}
-
-.contract-btn.paid {
-  background: #e4f5e9;
-  color: #18743a;
-}
-
-.contract-btn.end {
-  background: #fff0dc;
-  color: #b96800;
-}
-
-.contract-btn.delete {
-  background: #fde8e8;
-  color: #c62828;
-}
-
-/* אזור מסמכי החוזה */
-
-.contracts-table-wrap label {
-  font-weight: 600;
-}
-
-.contracts-table-wrap .status-button {
-  margin: 4px;
-  border-radius: 7px;
-  padding: 9px 12px;
-}
-
-/* כותרות ושטח המסך */
-
-.table-card h2 {
-  margin-bottom: 22px;
-}
-
-.table-card h3 {
-  margin-top: 30px;
-  margin-bottom: 15px;
-  font-size: 19px;
-  color: #252525;
-}
-
-/* התאמה למסכים קטנים */
-
-@media (max-width: 768px) {
-  .contracts-table-wrap {
-    margin-top: 15px;
+  .driver-action-bar a[href^="tel:"] {
+    background: #eef2f7 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
   }
 
-  .contract-actions {
-    min-width: 220px;
+  .driver-action-bar a[href^="https://wa.me/"] {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: 1px solid #16a34a !important;
   }
 
-  .contract-btn {
-    padding: 8px 10px;
-    font-size: 12px;
+  .driver-action-bar > button.status-button:nth-of-type(1) {
+    background: #e6f6ed !important;
+    color: #167344 !important;
+    border: 1px solid #b9e5ca !important;
   }
-}
 
-/* הרחבת אזור העבודה */
-.app-container {
-  width: 100%;
-  max-width: none;
-}
+  .driver-action-bar > button.status-button:nth-of-type(2) {
+    background: #fff7ed !important;
+    color: #9a5b16 !important;
+    border: 1px solid #fed7aa !important;
+  }
 
-.sidebar {
-  width: 250px;
-  flex-shrink: 0;
+  .driver-action-bar > button.cancel-button {
+    background: #fff0f0 !important;
+    color: #c0392b !important;
+    border: 1px solid #f5c6c6 !important;
+  }
+
+  .driver-action-bar > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - 6px) !important;
+    justify-self: center;
+  }
 }
 
 @media (min-width: 1200px) {
