@@ -1164,8 +1164,8 @@ if (!user) return <Login onLogin={setUser} />
             <section className="table-card">
               <div className="table-heading">
                 <div>
-                  <h2>צי הרכבים שלי</h2>
-                  <p>ניהול ומעקב אחר הרכבים בעסק</p>
+                  <h2>ניהול חוזי שכירות</h2>
+                  <p>מעקב וניהול הנהגים, הרכבים והתשלומים בעסק</p>
                 </div>
                 <span className="count">{vehicles.length} רכבים</span>
               </div>
