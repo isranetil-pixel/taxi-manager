@@ -1861,20 +1861,38 @@ if (!user) return <Login onLogin={setUser} />
                         <td>{d.active ? 'פעיל' : 'לא פעיל'}</td>
                         <td>
                           {d.phone && (
-  <a
-    href={`tel:${String(d.phone).replace(/[^\d+]/g, '')}`}
-    className="status-button"
-    style={{
-      display: 'inline-block',
-      textDecoration: 'none',
-      marginLeft: '5px'
-    }}
-  >
-    📞 התקשר
-  </a>
+  <>
+    <a
+      href={`tel:${String(d.phone).replace(/[^\d+]/g, '')}`}
+      className="status-button"
+      style={{
+        display: 'inline-block',
+        textDecoration: 'none',
+        marginLeft: '5px'
+      }}
+    >
+      📞 התקשר
+    </a>
+
+    <a
+      href={`https://wa.me/${String(d.phone).replace(/\D/g, '').replace(/^0/, '972')}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="status-button"
+      style={{
+        display: 'inline-block',
+        textDecoration: 'none',
+        marginLeft: '5px',
+        background: '#25D366',
+        color: '#ffffff'
+      }}
+    >
+      💬 WhatsApp
+    </a>
+   </>
 )}
 {' '}
-                          <button className="status-button"
+<button className="status-button"
   onClick={() => editDriver(d)}>
   עריכה
 </button>
