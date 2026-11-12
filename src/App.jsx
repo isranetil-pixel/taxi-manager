@@ -1,6 +1,6 @@
 import Login from './Login'
 import { supabase } from './supabase'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import './App.css'
 
 const initialVehicles = [
@@ -514,6 +514,37 @@ const { error } = await supabase
   setDrivers(updatedDrivers)
 
   showSystemModal('הפעולה הושלמה', 'הרכב נמחק בהצלחה', 'success')
+}
+async function permanentlyDeleteVehicle(id) {
+  const vehicle = deletedVehicles.find(
+    v => String(v.id) === String(id)
+  )
+
+  if (!vehicle) return
+
+  const { error } = await supabase
+    .from('vehicles')
+    .delete()
+    .eq('id', String(id))
+
+  if (error) {
+    showSystemModal(
+      'שגיאה במחיקה',
+      error.message,
+      'error'
+    )
+    return
+  }
+
+  setDeletedVehicles(prev =>
+    prev.filter(v => String(v.id) !== String(id))
+  )
+
+  showSystemModal(
+    'המחיקה הושלמה',
+    'הרכב נמחק לצמיתות ואינו מופיע עוד בארכיון.',
+    'success'
+  )
 }
 async function restoreVehicle(id) {
   const vehicleToRestore = deletedVehicles.find(
@@ -1454,7 +1485,7 @@ if (!user) return <Login onLogin={setUser} />
 </button>
             </section>
 
-            {showForm && (
+            {showForm && editingVehicleId === null && (
               <section className="form-card">
                 <h2>{editingVehicleId !== null ? 'עריכת פרטי רכב' : 'רכב חדש'}</h2>
                 <form onSubmit={addVehicle}>
@@ -1507,7 +1538,8 @@ if (!user) return <Login onLogin={setUser} />
                   </thead>
                   <tbody>
                     {vehicles.map(v => (
-                      <tr key={v.id}>
+  <Fragment key={v.id}>
+    <tr>
                         <td>{v.name}</td>
                         <td>{v.plate}</td>
                         <td>{v.driver}</td>
@@ -1551,8 +1583,85 @@ if (!user) return <Login onLogin={setUser} />
   🗑️ מחיקת רכב
 </button>
 </td>
-                      </tr>
-                    ))}
+                        </tr>
+                            {editingVehicleId === v.id && (
+      <tr>
+        <td colSpan={6}>
+          <section className="form-card">
+            <h2>עריכת פרטי רכב – {v.name}</h2>
+
+            <form onSubmit={addVehicle}>
+              <input
+                placeholder="דגם הרכב"
+                required
+                value={newVehicle.name}
+                onChange={e => setNewVehicle({
+                  ...newVehicle,
+                  name: e.target.value
+                })}
+              />
+
+              <input
+                placeholder="מספר רישוי"
+                required
+                value={newVehicle.plate}
+                onChange={e => setNewVehicle({
+                  ...newVehicle,
+                  plate: e.target.value
+                })}
+              />
+
+              <input
+                placeholder="שנת ייצור"
+                type="number"
+                value={newVehicle.year}
+                onChange={e => setNewVehicle({
+                  ...newVehicle,
+                  year: e.target.value
+                })}
+              />
+
+              <input
+                placeholder="שם הנהג"
+                value={newVehicle.driver}
+                onChange={e => setNewVehicle({
+                  ...newVehicle,
+                  driver: e.target.value
+                })}
+              />
+
+              <input
+                placeholder="שכירות חודשית"
+                type="number"
+                required
+                value={newVehicle.price}
+                onChange={e => setNewVehicle({
+                  ...newVehicle,
+                  price: e.target.value
+                })}
+              />
+
+              <button className="add-button" type="submit">
+                שמירת שינויים
+              </button>
+
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => {
+                  setEditingVehicleId(null)
+                  setShowForm(false)
+                }}
+              >
+                ביטול
+              </button>
+            </form>
+          </section>
+        </td>
+      </tr>
+    )}
+  </Fragment>
+))}
                   </tbody>
                 </table>
                          </div>
@@ -1594,6 +1703,19 @@ if (!user) return <Login onLogin={setUser} />
                             >
                               ♻️ שחזור רכב
                             </button>
+                            <button
+  className="contract-btn delete"
+  onClick={() => {
+    showSystemModal(
+      'מחיקת רכב לצמיתות',
+      `האם למחוק את ${v.name} (${v.plate}) לצמיתות? לא ניתן יהיה לשחזר אותו.`,
+      'confirm',
+      () => permanentlyDeleteVehicle(v.id)
+    )
+  }}
+>
+  🗑️ מחיקה לצמיתות
+</button>
                           </td>
                         </tr>
                       ))}
@@ -1984,7 +2106,7 @@ if (!user) return <Login onLogin={setUser} />
       {showForm ? 'סגור טופס' : '+ חוזה שכירות חדש'}
     </button>
 
-    {showForm && (
+    {showForm && editingContractId === null && (
       <form onSubmit={addContract} className="vehicle-form contract-form">
         <label>בחירת נהג</label>
         <div className="custom-select">
@@ -2269,6 +2391,111 @@ reactivateContract(contract.id)
                 ))}
               </div>
             </div>
+          )}
+                    {showForm && editingContractId === contract.id && (
+            <section className="form-card">
+              <h2>עריכת חוזה – {contract.driverName}</h2>
+
+              <form onSubmit={addContract} className="vehicle-form contract-form">
+                <label>בחירת נהג</label>
+                <div className="custom-select">
+                  <details>
+                    <summary>
+                      {drivers.find(d => String(d.id) === String(newContract.driverId))?.name || 'בחר נהג'}
+                      <span>⌄</span>
+                    </summary>
+
+                    <div className="custom-options">
+                      {drivers.map(driver => (
+                        <button
+                          type="button"
+                          key={driver.id}
+                          onClick={(e) => {
+                            setNewContract({
+                              ...newContract,
+                              driverId: String(driver.id)
+                            })
+                            e.currentTarget.closest('details').open = false
+                          }}
+                        >
+                          {driver.name}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+
+                <label>שכירות חודשית (₪)</label>
+                <input
+                  type="number"
+                  value={newContract.monthly}
+                  onChange={e => setNewContract({
+                    ...newContract,
+                    monthly: e.target.value
+                  })}
+                  required
+                />
+
+                <label>פיקדון (₪)</label>
+                <input
+                  type="number"
+                  value={newContract.deposit}
+                  onChange={e => setNewContract({
+                    ...newContract,
+                    deposit: e.target.value
+                  })}
+                />
+
+                <label>תאריך תחילת חוזה</label>
+                <input
+                  type="date"
+                  value={newContract.startDate}
+                  onChange={e => setNewContract({
+                    ...newContract,
+                    startDate: e.target.value
+                  })}
+                  required
+                />
+
+                <label>תאריך סיום חוזה</label>
+                <input
+                  type="date"
+                  value={newContract.endDate}
+                  onChange={e => setNewContract({
+                    ...newContract,
+                    endDate: e.target.value
+                  })}
+                />
+
+                <label>יום תשלום בחודש</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="28"
+                  value={newContract.dueDay}
+                  onChange={e => setNewContract({
+                    ...newContract,
+                    dueDay: e.target.value
+                  })}
+                  required
+                />
+
+                <button type="submit" className="add-button">
+                  שמירת שינויים
+                </button>
+
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => {
+                    setEditingContractId(null)
+                    setShowForm(false)
+                  }}
+                >
+                  ביטול
+                </button>
+              </form>
+            </section>
           )}
         </div>
       )
