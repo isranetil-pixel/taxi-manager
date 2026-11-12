@@ -1500,3 +1500,14 @@ footer {
   margin-bottom: 0;
   width: 100%;
 }
+
+.vehicles-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vehicles-cards-list .contract-card {
+  margin-bottom: 0;
+  width: 100%;
+}
