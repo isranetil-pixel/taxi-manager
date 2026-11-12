@@ -1709,7 +1709,7 @@ if (!user) return <Login onLogin={setUser} />
             </div>
           </div>
 
-          <div className="contract-action-bar">
+          <div className="driver-action-bar">
             <button
               className="status-button"
               onClick={() => {
