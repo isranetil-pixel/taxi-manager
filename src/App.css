@@ -1540,3 +1540,74 @@ footer {
     grid-column: 1 / -1;
   }
 }
+
+@media (max-width: 768px) {
+
+  .driver-action-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px !important;
+    margin-top: 18px !important;
+    padding-top: 16px;
+    border-top: 1px solid #edf0f4;
+    width: 100%;
+  }
+
+  .driver-action-bar > * {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    min-height: 50px !important;
+    margin: 0 !important;
+    padding: 10px 8px !important;
+    box-sizing: border-box;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+  }
+
+  /* חיוג */
+  .driver-action-bar a[href^="tel:"] {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #dce3eb !important;
+  }
+
+  /* WhatsApp */
+  .driver-action-bar a[href^="https://wa.me/"] {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: 1px solid #16a34a !important;
+  }
+
+  /* עריכה */
+  .driver-action-bar > button.status-button:nth-of-type(1) {
+    background: #e7f6ed !important;
+    color: #167344 !important;
+    border: 1px solid #c6ead3 !important;
+  }
+
+  /* השבתה והפעלה */
+  .driver-action-bar > button.status-button:nth-of-type(2) {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #dce3eb !important;
+  }
+
+  /* מחיקה */
+  .driver-action-bar > button.cancel-button {
+    background: #fff1f0 !important;
+    color: #c24135 !important;
+    border: 1px solid #f5cfcc !important;
+  }
+
+  /* כפתור אחרון במרכז */
+  .driver-action-bar > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - 6px) !important;
+    justify-self: center;
+  }
+}
